@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Site Interactif de Stratégies - Clan CoC</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #333;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+    }
+    main {
+      padding: 20px;
+    }
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .gallery img {
+      width: 200px;
+      height: auto;
+      cursor: pointer;
+      border: 2px solid #ccc;
+      transition: transform 0.2s;
+    }
+    .gallery img:hover {
+      transform: scale(1.05);
+    }
+    .form-section {
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ddd;
+    }
+    .form-section input[type="text"],
+    .form-section textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0 10px;
+      border: 1px solid #ccc;
+    }
+    .form-section button {
+      padding: 8px 12px;
+      border: none;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+    }
+    /* Popup détail */
+    #detailView {
+      display: none;
+      position: fixed;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 1000px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #fff;
+      border: 2px solid #333;
+      z-index: 1000;
+      padding: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    #detailView header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #detailView header h2 {
+      margin: 0;
+    }
+    #closeDetail {
+      cursor: pointer;
+      font-size: 1.2em;
+      background: none;
+      border: none;
+      color: #333;
+    }
+    #canvasContainer {
+      position: relative;
+      width: 100%;
+      text-align: center;
+    }
+    #detailImage {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    #annotationCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    /* Outils d'annotation */
+    .annotation-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .annotation-tools select,
+    .annotation-tools input[type="color"],
+    .annotation-tools input[type="number"],
+    .annotation-tools input[type="text"] {
+      padding: 5px;
+      margin-right: 5px;
+    }
+    /* Commentaires et propositions */
+    .comment, .proposal {
+      background: #eee;
+      padding: 10px;
+      margin: 5px 0;
+      border-left: 4px solid #333;
+    }
+    .comment button, .proposal button {
+      margin-top: 5px;
+      padding: 5px 10px;
+      background: #999;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+    }
+    /* Responsive */
+    @media(max-width: 600px) {
+      .gallery img {
+        width: 100px;
+      }
+      #detailView {
+        width: 90%;
+        top: 2%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Site Interactif pour le Clan - Clash of Clans</h1>
+  </header>
+  <main>
+    <!-- Formulaire d'upload d'image -->
+    <section class="form-section" id="uploadSection">
+      <h2>Uploader une image de village</h2>
+      <input type="file" id="fileInput" accept="image/*">
+      <button id="uploadBtn">Uploader</button>
+    </section>
+
+    <!-- Galerie des images -->
+    <section>
+      <h2>Galerie des villages</h2>
+      <div class="gallery" id="gallery"></div>
+    </section>
+  </main>
+
+  <!-- Vue détaillée et interactive d'un village -->
+  <div id="detailView">
+    <header>
+      <h2>Détail du Village</h2>
+      <button id="closeDetail">X</button>
+    </header>
+    
+    <!-- Container pour l'image et le canvas -->
+    <div id="canvasContainer">
+      <img id="detailImage" src="" alt="Village">
+      <canvas id="annotationCanvas"></canvas>
+    </div>
+    
+    <!-- Outils d'annotation -->
+    <div class="annotation-tools">
+      <label for="shapeSelect">Forme :</label>
+      <select id="shapeSelect">
+        <option value="rectangle">Rectangle</option>
+        <option value="circle">Cercle</option>
+        <option value="line">Ligne</option>
+        <option value="text">Texte</option>
+      </select>
+
+      <label for="colorPicker">Couleur :</label>
+      <input type="color" id="colorPicker" value="#ff0000">
+
+      <label for="lineWidth">Épaisseur :</label>
+      <input type="number" id="lineWidth" value="2" min="1" max="10" style="width:60px;">
+
+      <label for="textValue">Texte :</label>
+      <input type="text" id="textValue" placeholder="Saisir texte...">
+
+      <button id="clearDraw">Effacer Toutes Annotations</button>
+    </div>
+
+    <!-- Formulaire pour propositions d'attaque -->
+    <section class="form-section">
+      <h3>Proposer une stratégie d'attaque</h3>
+      <input type="text" id="proposalTitle" placeholder="Titre de la proposition">
+      <textarea id="proposalText" rows="3" placeholder="Détaillez votre stratégie..."></textarea>
+      <button id="addProposal">Ajouter Proposition</button>
+      <div id="proposalList"></div>
+    </section>
+    <!-- Section des commentaires -->
+    <section class="form-section">
+      <h3>Commentaires</h3>
+      <textarea id="commentText" rows="2" placeholder="Votre commentaire..."></textarea>
+      <button id="addComment">Ajouter Commentaire</button>
+      <div id="commentList"></div>
+    </section>
+  </div>
+
+  <script>
+    // === Variables globales ===
+    const gallery = document.getElementById('gallery');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const detailView = document.getElementById('detailView');
+    const closeDetail = document.getElementById('closeDetail');
+    const detailImage = document.getElementById('detailImage');
+    const annotationCanvas = document.getElementById('annotationCanvas');
+    const canvasContainer = document.getElementById('canvasContainer');
+
+    // Outils d'annotation
+    const shapeSelect = document.getElementById('shapeSelect');
+    const colorPicker = document.getElementById('colorPicker');
+    const lineWidthInput = document.getElementById('lineWidth');
+    const textValueInput = document.getElementById('textValue');
+    const clearDraw = document.getElementById('clearDraw');
+
+    // Propositions et commentaires
+    const proposalTitle = document.getElementById('proposalTitle');
+    const proposalText = document.getElementById('proposalText');
+    const addProposal = document.getElementById('addProposal');
+    const proposalList = document.getElementById('proposalList');
+    const commentText = document.getElementById('commentText');
+    const addComment = document.getElementById('addComment');
+    const commentList = document.getElementById('commentList');
+
+    let context;
+    let shapes = []; // Stocke les formes dessinées
+    let isDrawing = false;
+    let startX, startY;
+
+    // === Fonctions principales ===
+
+    // Ajuster le canvas à la taille de l'image
+    function adjustCanvas() {
+      annotationCanvas.width = detailImage.clientWidth;
+      annotationCanvas.height = detailImage.clientHeight;
+      annotationCanvas.style.width = detailImage.clientWidth + 'px';
+      annotationCanvas.style.height = detailImage.clientHeight + 'px';
+      context = annotationCanvas.getContext('2d');
+      redrawShapes();
+    }
+
+    // Redessiner toutes les formes stockées
+    function redrawShapes() {
+      if(!context) return;
+      context.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+      shapes.forEach(shape => {
+        drawShape(shape);
+      });
+    }
+
+    // Dessiner une forme à partir de son objet
+    function drawShape(shape) {
+      context.strokeStyle = shape.color;
+      context.lineWidth = shape.lineWidth;
+      context.fillStyle = shape.color;
+
+      switch(shape.type) {
+        case 'rectangle':
+          const rectW = shape.endX - shape.startX;
+          const rectH = shape.endY - shape.startY;
+          context.strokeRect(shape.startX, shape.startY, rectW, rectH);
+          break;
+        case 'circle':
+          const radius = Math.sqrt(
+            Math.pow(shape.endX - shape.startX, 2) + 
+            Math.pow(shape.endY - shape.startY, 2)
+          );
+          context.beginPath();
+          context.arc(shape.startX, shape.startY, radius, 0, 2*Math.PI);
+          context.stroke();
+          break;
+        case 'line':
+          context.beginPath();
+          context.moveTo(shape.startX, shape.startY);
+          context.lineTo(shape.endX, shape.endY);
+          context.stroke();
+          break;
+        case 'text':
+          // Pour le texte, on ignore endX/endY, on se base sur startX/startY
+          context.font = shape.lineWidth + "0px Arial"; 
+          // lineWidth en px n’est pas idéal, on peut ajuster. Ex: 16px
+          // Ici on convertit shape.lineWidth en une taille de police "16", "20" etc.
+          const fontSize = parseInt(shape.lineWidth) * 8; 
+          context.font = fontSize + "px Arial";
+          context.fillText(shape.textValue, shape.startX, shape.startY);
+          break;
+      }
+    }
+
+    // Ouvrir la vue détaillée
+    function openDetailView(src) {
+      detailImage.src = src;
+      detailView.style.display = 'block';
+      // Attendre le chargement de l'image pour ajuster le canvas
+      detailImage.onload = () => {
+        adjustCanvas();
+        // Réinitialiser le tableau de formes
+        shapes = [];
+        redrawShapes();
+        // Vider les listes (propositions, commentaires) pour l'exemple
+        proposalList.innerHTML = "";
+        commentList.innerHTML = "";
+      };
+    }
+
+    // === Événements ===
+
+    // Upload de l'image
+    uploadBtn.addEventListener('click', () => {
+      if(fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Créer un nouvel élément image dans la galerie
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.alt = "Village du clan";
+          img.addEventListener('click', () => {
+            openDetailView(img.src);
+          });
+          gallery.appendChild(img);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      }
+    });
+
+    // Fermer la vue détaillée
+    closeDetail.addEventListener('click', () => {
+      detailView.style.display = 'none';
+    });
+
+    // Effacer toutes les annotations
+    clearDraw.addEventListener('click', () => {
+      shapes = [];
+      redrawShapes();
+    });
+
+    // Gestion du dessin sur le canvas
+    annotationCanvas.addEventListener('mousedown', (e) => {
+      const rect = annotationCanvas.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+      isDrawing = true;
+
+      // Si on veut placer du texte directement au clic, on peut gérer différemment
+      if(shapeSelect.value === 'text') {
+        isDrawing = false; // pas de "drag"
+        const textShape = {
+          type: 'text',
+          startX: startX,
+          startY: startY,
+          endX: startX,
+          endY: startY,
+          color: colorPicker.value,
+          lineWidth: parseInt(lineWidthInput.value), // utilisé pour la taille
+          textValue: textValueInput.value || "Texte"
+        };
+        shapes.push(textShape);
+        redrawShapes();
+      }
+    });
+
+    annotationCanvas.addEventListener('mousemove', (e) => {
+      if(!isDrawing || shapeSelect.value === 'text') return;
+      redrawShapes(); // on efface puis on redessine tout
+
+      // Dessin en cours (aperçu)
+      const rect = annotationCanvas.getBoundingClientRect();
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+
+      // Dessiner la forme temporaire
+      context.strokeStyle = colorPicker.value;
+      context.lineWidth = lineWidthInput.value;
+
+      switch(shapeSelect.value) {
+        case 'rectangle':
+          context.strokeRect(startX, startY, currentX - startX, currentY - startY);
+          break;
+        case 'circle':
+          const radius = Math.sqrt(
+            Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2)
+          );
+          context.beginPath();
+          context.arc(startX, startY, radius, 0, 2*Math.PI);
+          context.stroke();
+          break;
+        case 'line':
+          context.beginPath();
+          context.moveTo(startX, startY);
+          context.lineTo(currentX, currentY);
+          context.stroke();
+          break;
+      }
+    });
+
+    annotationCanvas.addEventListener('mouseup', (e) => {
+      if(!isDrawing || shapeSelect.value === 'text') return;
+      const rect = annotationCanvas.getBoundingClientRect();
+      const endX = e.clientX - rect.left;
+      const endY = e.clientY - rect.top;
+      isDrawing = false;
+
+      // On enregistre la forme finale dans le tableau
+      const shapeObj = {
+        type: shapeSelect.value,
+        startX: startX,
+        startY: startY,
+        endX: endX,
+        endY: endY,
+        color: colorPicker.value,
+        lineWidth: parseInt(lineWidthInput.value),
+        textValue: textValueInput.value // ne sert que si type = 'text'
+      };
+      shapes.push(shapeObj);
+      redrawShapes();
+    });
+
+    // Ajouter une proposition
+    addProposal.addEventListener('click', () => {
+      if(proposalTitle.value.trim() !== "" && proposalText.value.trim() !== "") {
+        const div = document.createElement('div');
+        div.className = 'proposal';
+        div.innerHTML = `<strong>${proposalTitle.value}</strong>
+                         <p>${proposalText.value}</p>
+                         <button class="deleteProposal">Supprimer</button>`;
+        // Bouton de suppression
+        div.querySelector('.deleteProposal').addEventListener('click', () => {
+          proposalList.removeChild(div);
+        });
+        proposalList.appendChild(div);
+        proposalTitle.value = "";
+        proposalText.value = "";
+      }
+    });
+
+    // Ajouter un commentaire
+    addComment.addEventListener('click', () => {
+      if(commentText.value.trim() !== "") {
+        const div = document.createElement('div');
+        div.className = 'comment';
+        div.innerHTML = `<p>${commentText.value}</p>
+                         <button class="deleteComment">Supprimer</button>`;
+        // Bouton de suppression
+        div.querySelector('.deleteComment').addEventListener('click', () => {
+          commentList.removeChild(div);
+        });
+        commentList.appendChild(div);
+        commentText.value = "";
+      }
+    });
+  </script>
+</body>
+</html>
