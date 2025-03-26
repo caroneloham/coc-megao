@@ -120,6 +120,31 @@
       padding: 5px;
       margin-right: 5px;
     }
+    /* Section Sorts */
+    .spell-container {
+      background: #fff;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+    }
+    .spell-container h3 {
+      margin-top: 0;
+    }
+    .spell-icons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .spell-icons img {
+      width: 50px;
+      height: 50px;
+      cursor: grab;
+      border: 1px solid #ccc;
+      transition: transform 0.2s;
+    }
+    .spell-icons img:hover {
+      transform: scale(1.1);
+    }
     /* Commentaires et propositions */
     .comment, .proposal {
       background: #eee;
@@ -200,6 +225,17 @@
 
       <button id="clearDraw">Effacer Toutes Annotations</button>
     </div>
+    
+    <!-- Section pour déposer des sorts -->
+    <div class="spell-container">
+      <h3>Déposer un sort</h3>
+      <div class="spell-icons">
+        <!-- Exemple d'icônes de sorts (remplacer les URLs par des liens réels) -->
+        <img src="https://cdn-icons-png.flaticon.com/512/235/235861.png" alt="Sort Heal" draggable="true" class="spell-icon">
+        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" alt="Sort Rage" draggable="true" class="spell-icon">
+        <img src="https://cdn-icons-png.flaticon.com/512/2910/2910798.png" alt="Sort Freeze" draggable="true" class="spell-icon">
+      </div>
+    </div>
 
     <!-- Formulaire pour propositions d'attaque -->
     <section class="form-section">
@@ -245,8 +281,11 @@
     const addComment = document.getElementById('addComment');
     const commentList = document.getElementById('commentList');
 
+    // Gestion des icônes de sorts
+    const spellIcons = document.querySelectorAll('.spell-icon');
+
     let context;
-    let shapes = []; // Stocke les formes dessinées
+    let shapes = []; // Stocke l'ensemble des formes et sorts déposés
     let isDrawing = false;
     let startX, startY;
 
@@ -271,42 +310,41 @@
       });
     }
 
-    // Dessiner une forme à partir de son objet
+    // Dessiner une forme ou un sort à partir de son objet
     function drawShape(shape) {
-      context.strokeStyle = shape.color;
-      context.lineWidth = shape.lineWidth;
-      context.fillStyle = shape.color;
-
-      switch(shape.type) {
-        case 'rectangle':
-          const rectW = shape.endX - shape.startX;
-          const rectH = shape.endY - shape.startY;
-          context.strokeRect(shape.startX, shape.startY, rectW, rectH);
-          break;
-        case 'circle':
-          const radius = Math.sqrt(
-            Math.pow(shape.endX - shape.startX, 2) + 
-            Math.pow(shape.endY - shape.startY, 2)
-          );
-          context.beginPath();
-          context.arc(shape.startX, shape.startY, radius, 0, 2*Math.PI);
-          context.stroke();
-          break;
-        case 'line':
-          context.beginPath();
-          context.moveTo(shape.startX, shape.startY);
-          context.lineTo(shape.endX, shape.endY);
-          context.stroke();
-          break;
-        case 'text':
-          // Pour le texte, on ignore endX/endY, on se base sur startX/startY
-          context.font = shape.lineWidth + "0px Arial"; 
-          // lineWidth en px n’est pas idéal, on peut ajuster. Ex: 16px
-          // Ici on convertit shape.lineWidth en une taille de police "16", "20" etc.
-          const fontSize = parseInt(shape.lineWidth) * 8; 
-          context.font = fontSize + "px Arial";
-          context.fillText(shape.textValue, shape.startX, shape.startY);
-          break;
+      if (shape.type === 'spell') {
+        // Dessiner l'icône du sort
+        const img = new Image();
+        img.src = shape.icon;
+        img.onload = () => {
+          context.drawImage(img, shape.x, shape.y, shape.width, shape.height);
+        };
+      } else {
+        context.strokeStyle = shape.color;
+        context.lineWidth = shape.lineWidth;
+        context.fillStyle = shape.color;
+        switch(shape.type) {
+          case 'rectangle':
+            context.strokeRect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
+            break;
+          case 'circle':
+            const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
+            context.beginPath();
+            context.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
+            context.stroke();
+            break;
+          case 'line':
+            context.beginPath();
+            context.moveTo(shape.startX, shape.startY);
+            context.lineTo(shape.endX, shape.endY);
+            context.stroke();
+            break;
+          case 'text':
+            const fontSize = parseInt(shape.lineWidth) * 8;
+            context.font = fontSize + "px Arial";
+            context.fillText(shape.textValue, shape.startX, shape.startY);
+            break;
+        }
       }
     }
 
@@ -314,13 +352,11 @@
     function openDetailView(src) {
       detailImage.src = src;
       detailView.style.display = 'block';
-      // Attendre le chargement de l'image pour ajuster le canvas
       detailImage.onload = () => {
         adjustCanvas();
-        // Réinitialiser le tableau de formes
+        // Réinitialiser les formes pour cet exemple
         shapes = [];
         redrawShapes();
-        // Vider les listes (propositions, commentaires) pour l'exemple
         proposalList.innerHTML = "";
         commentList.innerHTML = "";
       };
@@ -333,7 +369,6 @@
       if(fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          // Créer un nouvel élément image dans la galerie
           const img = document.createElement('img');
           img.src = e.target.result;
           img.alt = "Village du clan";
@@ -351,22 +386,20 @@
       detailView.style.display = 'none';
     });
 
-    // Effacer toutes les annotations
+    // Effacer toutes les annotations et sorts
     clearDraw.addEventListener('click', () => {
       shapes = [];
       redrawShapes();
     });
 
-    // Gestion du dessin sur le canvas
+    // Gestion du dessin sur le canvas (formes classiques)
     annotationCanvas.addEventListener('mousedown', (e) => {
       const rect = annotationCanvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
       isDrawing = true;
-
-      // Si on veut placer du texte directement au clic, on peut gérer différemment
       if(shapeSelect.value === 'text') {
-        isDrawing = false; // pas de "drag"
+        isDrawing = false;
         const textShape = {
           type: 'text',
           startX: startX,
@@ -374,7 +407,7 @@
           endX: startX,
           endY: startY,
           color: colorPicker.value,
-          lineWidth: parseInt(lineWidthInput.value), // utilisé pour la taille
+          lineWidth: parseInt(lineWidthInput.value),
           textValue: textValueInput.value || "Texte"
         };
         shapes.push(textShape);
@@ -384,27 +417,20 @@
 
     annotationCanvas.addEventListener('mousemove', (e) => {
       if(!isDrawing || shapeSelect.value === 'text') return;
-      redrawShapes(); // on efface puis on redessine tout
-
-      // Dessin en cours (aperçu)
+      redrawShapes();
       const rect = annotationCanvas.getBoundingClientRect();
       const currentX = e.clientX - rect.left;
       const currentY = e.clientY - rect.top;
-
-      // Dessiner la forme temporaire
       context.strokeStyle = colorPicker.value;
       context.lineWidth = lineWidthInput.value;
-
       switch(shapeSelect.value) {
         case 'rectangle':
           context.strokeRect(startX, startY, currentX - startX, currentY - startY);
           break;
         case 'circle':
-          const radius = Math.sqrt(
-            Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2)
-          );
+          const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
           context.beginPath();
-          context.arc(startX, startY, radius, 0, 2*Math.PI);
+          context.arc(startX, startY, radius, 0, 2 * Math.PI);
           context.stroke();
           break;
         case 'line':
@@ -422,8 +448,6 @@
       const endX = e.clientX - rect.left;
       const endY = e.clientY - rect.top;
       isDrawing = false;
-
-      // On enregistre la forme finale dans le tableau
       const shapeObj = {
         type: shapeSelect.value,
         startX: startX,
@@ -432,13 +456,46 @@
         endY: endY,
         color: colorPicker.value,
         lineWidth: parseInt(lineWidthInput.value),
-        textValue: textValueInput.value // ne sert que si type = 'text'
+        textValue: textValueInput.value
       };
       shapes.push(shapeObj);
       redrawShapes();
     });
 
-    // Ajouter une proposition
+    // === Gestion du dépôt de sorts via Drag & Drop ===
+
+    // Rendre les icônes de sorts draggables
+    spellIcons.forEach(icon => {
+      icon.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', icon.src);
+      });
+    });
+
+    // Autoriser le drop sur le canvas
+    annotationCanvas.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    annotationCanvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const rect = annotationCanvas.getBoundingClientRect();
+      const dropX = e.clientX - rect.left;
+      const dropY = e.clientY - rect.top;
+      const spellSrc = e.dataTransfer.getData('text/plain');
+      // Enregistrer le sort déposé dans le tableau shapes
+      const spellShape = {
+        type: 'spell',
+        x: dropX - 25, // centrer l'icône (si 50x50)
+        y: dropY - 25,
+        width: 50,
+        height: 50,
+        icon: spellSrc
+      };
+      shapes.push(spellShape);
+      redrawShapes();
+    });
+
+    // Propositions d'attaque
     addProposal.addEventListener('click', () => {
       if(proposalTitle.value.trim() !== "" && proposalText.value.trim() !== "") {
         const div = document.createElement('div');
@@ -446,7 +503,6 @@
         div.innerHTML = `<strong>${proposalTitle.value}</strong>
                          <p>${proposalText.value}</p>
                          <button class="deleteProposal">Supprimer</button>`;
-        // Bouton de suppression
         div.querySelector('.deleteProposal').addEventListener('click', () => {
           proposalList.removeChild(div);
         });
@@ -456,14 +512,13 @@
       }
     });
 
-    // Ajouter un commentaire
+    // Commentaires
     addComment.addEventListener('click', () => {
       if(commentText.value.trim() !== "") {
         const div = document.createElement('div');
         div.className = 'comment';
         div.innerHTML = `<p>${commentText.value}</p>
                          <button class="deleteComment">Supprimer</button>`;
-        // Bouton de suppression
         div.querySelector('.deleteComment').addEventListener('click', () => {
           commentList.removeChild(div);
         });
