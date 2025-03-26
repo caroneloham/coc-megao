@@ -211,7 +211,7 @@
       <label for="textValue">Texte :</label>
       <input type="text" id="textValue" placeholder="Saisir texte...">
       <button id="clearDraw">Effacer Toutes Annotations</button>
-      <!-- Bouton déplacement accessible séparément -->
+      <!-- Bouton mode déplacement accessible séparément -->
       <button id="moveModeBtn">Mode Déplacement</button>
     </div>
     
@@ -219,9 +219,10 @@
     <div class="spell-container">
       <h3>Déposer un sort</h3>
       <div class="spell-icons">
-        <img src="https://cdn-icons-png.flaticon.com/512/235/235861.png" alt="Sort Heal" draggable="true" class="spell-icon">
-        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" alt="Sort Rage" draggable="true" class="spell-icon">
-        <img src="https://cdn-icons-png.flaticon.com/512/2910/2910798.png" alt="Sort Freeze" draggable="true" class="spell-icon">
+        <!-- Icônes de sorts Clash of Clans (exemples) -->
+        <img src="https://vignette.wikia.nocookie.net/clashofclans/images/6/69/Healing_Spell_icon.png" alt="Sort Heal" draggable="true" class="spell-icon">
+        <img src="https://vignette.wikia.nocookie.net/clashofclans/images/5/56/Rage_Spell_icon.png" alt="Sort Rage" draggable="true" class="spell-icon">
+        <img src="https://vignette.wikia.nocookie.net/clashofclans/images/4/40/Freeze_Spell_icon.png" alt="Sort Freeze" draggable="true" class="spell-icon">
       </div>
     </div>
     
@@ -274,7 +275,7 @@
     const spellIcons = document.querySelectorAll('.spell-icon');
     
     let context;
-    let shapes = []; // Stocke toutes les formes, dessins, textes, sorts...
+    let shapes = []; // Stocke toutes les annotations, dessins, textes, sorts...
     let isDrawing = false;
     let currentPath = []; // Pour le crayon (freehand)
     let selectedShape = null; // Pour le déplacement
@@ -283,6 +284,21 @@
     
     // Mode déplacement (indépendant du sélecteur)
     let isMoveMode = false;
+    
+    // Sauvegarde dans le localStorage pour l'image en cours
+    function saveAnnotations() {
+      if (detailImage.src) {
+        localStorage.setItem("annotations_" + detailImage.src, JSON.stringify(shapes));
+      }
+    }
+    
+    // Chargement des annotations sauvegardées pour l'image
+    function loadAnnotations() {
+      const data = localStorage.getItem("annotations_" + detailImage.src);
+      if (data) {
+        shapes = JSON.parse(data);
+      }
+    }
     
     // === Ajustement du canvas ===
     function adjustCanvas() {
@@ -294,14 +310,14 @@
       redrawShapes();
     }
     
-    // Redessine toutes les formes et éléments
+    // Redessine toutes les annotations
     function redrawShapes() {
       if (!context) return;
       context.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
       shapes.forEach(shape => drawShape(shape));
     }
     
-    // Dessine une forme ou élément selon son type
+    // Dessine une annotation selon son type
     function drawShape(shape) {
       if (shape.type === 'spell') {
         const img = new Image();
@@ -347,7 +363,7 @@
       }
     }
     
-    // === Détection de clic sur une forme pour suppression ou déplacement ===
+    // Détection de clic sur une annotation (pour suppression ou déplacement)
     function isPointInShape(x, y, shape) {
       const margin = 5;
       if (shape.type === 'rectangle' || shape.type === 'text') {
@@ -378,7 +394,7 @@
       return false;
     }
     
-    // Utilitaire pour la distance d'un point à un segment
+    // Utilitaire : distance d'un point à un segment
     function distanceToSegment(p, v, w) {
       let l2 = (w.x - v.x)**2 + (w.y - v.y)**2;
       if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
@@ -388,13 +404,14 @@
       return Math.hypot(p.x - proj.x, p.y - proj.y);
     }
     
-    // === Ouverture de la vue détaillée ===
+    // Ouverture de la vue détaillée pour une image
     function openDetailView(src) {
       detailImage.src = src;
       detailView.style.display = 'block';
       detailImage.onload = () => {
         adjustCanvas();
-        shapes = [];
+        // Charger les annotations sauvegardées (si présentes)
+        loadAnnotations();
         redrawShapes();
         proposalList.innerHTML = "";
         commentList.innerHTML = "";
@@ -427,6 +444,7 @@
     clearDraw.addEventListener('click', () => {
       shapes = [];
       redrawShapes();
+      saveAnnotations();
     });
     
     // Gestion du drag & drop des icônes de sorts
@@ -456,22 +474,22 @@
       };
       shapes.push(spellShape);
       redrawShapes();
+      saveAnnotations();
     });
     
-    // Bouton "Mode Déplacement" : active ou désactive le mode move
+    // Bouton "Mode Déplacement" : active/désactive le mode déplacement
     moveModeBtn.addEventListener('click', () => {
       isMoveMode = !isMoveMode;
-      // Change l'apparence du bouton pour indiquer l'état
       moveModeBtn.style.background = isMoveMode ? "#cc0000" : "#0066cc";
     });
     
-    // Gestion du dessin, déplacement et sélection
+    // Gestion des interactions sur le canvas
     annotationCanvas.addEventListener('mousedown', (e) => {
       let rect = annotationCanvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
       
-      // Si le mode déplacement est activé
+      // Si mode déplacement est activé
       if (isMoveMode) {
         for (let i = shapes.length - 1; i >= 0; i--) {
           if (isPointInShape(startX, startY, shapes[i])) {
@@ -481,10 +499,10 @@
             break;
           }
         }
-        return; // Sortir pour éviter de lancer un dessin
+        return; // Ne pas initier un nouveau dessin
       }
       
-      // Sinon, utiliser l'outil sélectionné dans le sélecteur
+      // Utiliser l'outil sélectionné
       let currentTool = shapeSelect.value;
       if (currentTool === 'pencil') {
         isDrawing = true;
@@ -503,6 +521,7 @@
         };
         shapes.push(textShape);
         redrawShapes();
+        saveAnnotations();
       }
       else {
         isDrawing = true;
@@ -533,6 +552,7 @@
           selectedShape.y += dy;
         }
         redrawShapes();
+        saveAnnotations();
         return;
       }
       
@@ -588,6 +608,7 @@
         shapes.push(pencilShape);
         currentPath = [];
         redrawShapes();
+        saveAnnotations();
       }
       else if (isDrawing && (currentTool === 'rectangle' || currentTool === 'circle' || currentTool === 'line')) {
         isDrawing = false;
@@ -603,6 +624,7 @@
         };
         shapes.push(shapeObj);
         redrawShapes();
+        saveAnnotations();
       }
     });
     
@@ -615,12 +637,13 @@
         if (isPointInShape(x, y, shapes[i])) {
           shapes.splice(i, 1);
           redrawShapes();
+          saveAnnotations();
           break;
         }
       }
     });
     
-    // Propositions
+    // Propositions d'attaque
     addProposal.addEventListener('click', () => {
       if (proposalTitle.value.trim() !== "" && proposalText.value.trim() !== "") {
         let div = document.createElement('div');
