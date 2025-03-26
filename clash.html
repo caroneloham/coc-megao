@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <title>Site Interactif de Stratégies - Clan CoC</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -19,9 +17,7 @@
       padding: 10px;
       text-align: center;
     }
-    main {
-      padding: 20px;
-    }
+    main { padding: 20px; }
     .gallery {
       display: flex;
       flex-wrap: wrap;
@@ -34,9 +30,7 @@
       border: 2px solid #ccc;
       transition: transform 0.2s;
     }
-    .gallery img:hover {
-      transform: scale(1.05);
-    }
+    .gallery img:hover { transform: scale(1.05); }
     .form-section {
       margin-bottom: 20px;
       background: #fff;
@@ -57,7 +51,7 @@
       color: #fff;
       cursor: pointer;
     }
-    /* Popup détail */
+    /* Popup Détail */
     #detailView {
       display: none;
       position: fixed;
@@ -80,9 +74,7 @@
       align-items: center;
       margin-bottom: 10px;
     }
-    #detailView header h2 {
-      margin: 0;
-    }
+    #detailView header h2 { margin: 0; }
     #closeDetail {
       cursor: pointer;
       font-size: 1.2em;
@@ -112,6 +104,7 @@
       flex-wrap: wrap;
       gap: 10px;
       margin: 10px 0;
+      align-items: center;
     }
     .annotation-tools select,
     .annotation-tools input[type="color"],
@@ -120,6 +113,14 @@
       padding: 5px;
       margin-right: 5px;
     }
+    /* Bouton déplacement */
+    #moveModeBtn {
+      padding: 5px 10px;
+      background: #0066cc;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+    }
     /* Section Sorts */
     .spell-container {
       background: #fff;
@@ -127,9 +128,7 @@
       margin: 10px 0;
       border: 1px solid #ddd;
     }
-    .spell-container h3 {
-      margin-top: 0;
-    }
+    .spell-container h3 { margin-top: 0; }
     .spell-icons {
       display: flex;
       gap: 10px;
@@ -142,10 +141,8 @@
       border: 1px solid #ccc;
       transition: transform 0.2s;
     }
-    .spell-icons img:hover {
-      transform: scale(1.1);
-    }
-    /* Commentaires et propositions */
+    .spell-icons img:hover { transform: scale(1.1); }
+    /* Commentaires et Propositions */
     .comment, .proposal {
       background: #eee;
       padding: 10px;
@@ -162,13 +159,8 @@
     }
     /* Responsive */
     @media(max-width: 600px) {
-      .gallery img {
-        width: 100px;
-      }
-      #detailView {
-        width: 90%;
-        top: 2%;
-      }
+      .gallery img { width: 100px; }
+      #detailView { width: 90%; top: 2%; }
     }
   </style>
 </head>
@@ -177,67 +169,63 @@
     <h1>Site Interactif pour le Clan - Clash of Clans</h1>
   </header>
   <main>
-    <!-- Formulaire d'upload d'image -->
+    <!-- Upload d'image -->
     <section class="form-section" id="uploadSection">
       <h2>Uploader une image de village</h2>
       <input type="file" id="fileInput" accept="image/*">
       <button id="uploadBtn">Uploader</button>
     </section>
-
-    <!-- Galerie des images -->
+    <!-- Galerie -->
     <section>
       <h2>Galerie des villages</h2>
       <div class="gallery" id="gallery"></div>
     </section>
   </main>
-
-  <!-- Vue détaillée et interactive d'un village -->
+  
+  <!-- Vue détaillée et interactive -->
   <div id="detailView">
     <header>
       <h2>Détail du Village</h2>
       <button id="closeDetail">X</button>
     </header>
-    
-    <!-- Container pour l'image et le canvas -->
+    <!-- Conteneur image + canvas -->
     <div id="canvasContainer">
       <img id="detailImage" src="" alt="Village">
       <canvas id="annotationCanvas"></canvas>
     </div>
-    
     <!-- Outils d'annotation -->
     <div class="annotation-tools">
-      <label for="shapeSelect">Forme :</label>
+      <label for="shapeSelect">Outil :</label>
+      <!-- Le crayon est l'outil par défaut -->
       <select id="shapeSelect">
+        <option value="pencil" selected>Crayon</option>
         <option value="rectangle">Rectangle</option>
         <option value="circle">Cercle</option>
         <option value="line">Ligne</option>
         <option value="text">Texte</option>
       </select>
-
       <label for="colorPicker">Couleur :</label>
       <input type="color" id="colorPicker" value="#ff0000">
-
       <label for="lineWidth">Épaisseur :</label>
       <input type="number" id="lineWidth" value="2" min="1" max="10" style="width:60px;">
-
       <label for="textValue">Texte :</label>
       <input type="text" id="textValue" placeholder="Saisir texte...">
-
       <button id="clearDraw">Effacer Toutes Annotations</button>
+      <!-- Bouton déplacement accessible séparément -->
+      <button id="moveModeBtn">Mode Déplacement</button>
     </div>
     
-    <!-- Section pour déposer des sorts -->
+    <!-- Section Sorts -->
     <div class="spell-container">
       <h3>Déposer un sort</h3>
       <div class="spell-icons">
-        <!-- Exemple d'icônes de sorts (remplacer les URLs par des liens réels) -->
         <img src="https://cdn-icons-png.flaticon.com/512/235/235861.png" alt="Sort Heal" draggable="true" class="spell-icon">
         <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png" alt="Sort Rage" draggable="true" class="spell-icon">
         <img src="https://cdn-icons-png.flaticon.com/512/2910/2910798.png" alt="Sort Freeze" draggable="true" class="spell-icon">
       </div>
     </div>
-
-    <!-- Formulaire pour propositions d'attaque -->
+    
+    <!-- Propositions -->
     <section class="form-section">
       <h3>Proposer une stratégie d'attaque</h3>
       <input type="text" id="proposalTitle" placeholder="Titre de la proposition">
@@ -245,7 +233,7 @@
       <button id="addProposal">Ajouter Proposition</button>
       <div id="proposalList"></div>
     </section>
-    <!-- Section des commentaires -->
+    <!-- Commentaires -->
     <section class="form-section">
       <h3>Commentaires</h3>
       <textarea id="commentText" rows="2" placeholder="Votre commentaire..."></textarea>
@@ -253,7 +241,7 @@
       <div id="commentList"></div>
     </section>
   </div>
-
+  
   <script>
     // === Variables globales ===
     const gallery = document.getElementById('gallery');
@@ -264,15 +252,16 @@
     const detailImage = document.getElementById('detailImage');
     const annotationCanvas = document.getElementById('annotationCanvas');
     const canvasContainer = document.getElementById('canvasContainer');
-
+    
     // Outils d'annotation
     const shapeSelect = document.getElementById('shapeSelect');
     const colorPicker = document.getElementById('colorPicker');
     const lineWidthInput = document.getElementById('lineWidth');
     const textValueInput = document.getElementById('textValue');
     const clearDraw = document.getElementById('clearDraw');
-
-    // Propositions et commentaires
+    const moveModeBtn = document.getElementById('moveModeBtn');
+    
+    // Propositions / Commentaires
     const proposalTitle = document.getElementById('proposalTitle');
     const proposalText = document.getElementById('proposalText');
     const addProposal = document.getElementById('addProposal');
@@ -280,18 +269,22 @@
     const commentText = document.getElementById('commentText');
     const addComment = document.getElementById('addComment');
     const commentList = document.getElementById('commentList');
-
-    // Gestion des icônes de sorts
+    
+    // Icônes de sorts
     const spellIcons = document.querySelectorAll('.spell-icon');
-
+    
     let context;
-    let shapes = []; // Stocke l'ensemble des formes et sorts déposés
+    let shapes = []; // Stocke toutes les formes, dessins, textes, sorts...
     let isDrawing = false;
+    let currentPath = []; // Pour le crayon (freehand)
+    let selectedShape = null; // Pour le déplacement
+    let moveOffset = { x: 0, y: 0 };
     let startX, startY;
-
-    // === Fonctions principales ===
-
-    // Ajuster le canvas à la taille de l'image
+    
+    // Mode déplacement (indépendant du sélecteur)
+    let isMoveMode = false;
+    
+    // === Ajustement du canvas ===
     function adjustCanvas() {
       annotationCanvas.width = detailImage.clientWidth;
       annotationCanvas.height = detailImage.clientHeight;
@@ -300,25 +293,31 @@
       context = annotationCanvas.getContext('2d');
       redrawShapes();
     }
-
-    // Redessiner toutes les formes stockées
+    
+    // Redessine toutes les formes et éléments
     function redrawShapes() {
-      if(!context) return;
+      if (!context) return;
       context.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
-      shapes.forEach(shape => {
-        drawShape(shape);
-      });
+      shapes.forEach(shape => drawShape(shape));
     }
-
-    // Dessiner une forme ou un sort à partir de son objet
+    
+    // Dessine une forme ou élément selon son type
     function drawShape(shape) {
       if (shape.type === 'spell') {
-        // Dessiner l'icône du sort
         const img = new Image();
         img.src = shape.icon;
         img.onload = () => {
           context.drawImage(img, shape.x, shape.y, shape.width, shape.height);
         };
+      } else if (shape.type === 'freehand') {
+        if (shape.points.length > 0) {
+          context.strokeStyle = shape.color;
+          context.lineWidth = shape.lineWidth;
+          context.beginPath();
+          context.moveTo(shape.points[0].x, shape.points[0].y);
+          shape.points.forEach(pt => context.lineTo(pt.x, pt.y));
+          context.stroke();
+        }
       } else {
         context.strokeStyle = shape.color;
         context.lineWidth = shape.lineWidth;
@@ -328,7 +327,7 @@
             context.strokeRect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
             break;
           case 'circle':
-            const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
+            let radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
             context.beginPath();
             context.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
             context.stroke();
@@ -340,67 +339,159 @@
             context.stroke();
             break;
           case 'text':
-            const fontSize = parseInt(shape.lineWidth) * 8;
+            let fontSize = parseInt(shape.lineWidth) * 8;
             context.font = fontSize + "px Arial";
             context.fillText(shape.textValue, shape.startX, shape.startY);
             break;
         }
       }
     }
-
-    // Ouvrir la vue détaillée
+    
+    // === Détection de clic sur une forme pour suppression ou déplacement ===
+    function isPointInShape(x, y, shape) {
+      const margin = 5;
+      if (shape.type === 'rectangle' || shape.type === 'text') {
+        let minX = Math.min(shape.startX, shape.endX);
+        let maxX = Math.max(shape.startX, shape.endX);
+        let minY = Math.min(shape.startY, shape.endY);
+        let maxY = Math.max(shape.startY, shape.endY);
+        return (x >= minX - margin && x <= maxX + margin && y >= minY - margin && y <= maxY + margin);
+      } else if (shape.type === 'circle') {
+        let radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
+        let dist = Math.sqrt(Math.pow(x - shape.startX, 2) + Math.pow(y - shape.startY, 2));
+        return (dist <= radius + margin);
+      } else if (shape.type === 'line') {
+        let A = { x: shape.startX, y: shape.startY };
+        let B = { x: shape.endX, y: shape.endY };
+        let distLine = distanceToSegment({x, y}, A, B);
+        return (distLine <= margin);
+      } else if (shape.type === 'freehand') {
+        let xs = shape.points.map(p => p.x);
+        let ys = shape.points.map(p => p.y);
+        let minX = Math.min(...xs), maxX = Math.max(...xs);
+        let minY = Math.min(...ys), maxY = Math.max(...ys);
+        return (x >= minX - margin && x <= maxX + margin && y >= minY - margin && y <= maxY + margin);
+      } else if (shape.type === 'spell') {
+        return (x >= shape.x && x <= shape.x + shape.width &&
+                y >= shape.y && y <= shape.y + shape.height);
+      }
+      return false;
+    }
+    
+    // Utilitaire pour la distance d'un point à un segment
+    function distanceToSegment(p, v, w) {
+      let l2 = (w.x - v.x)**2 + (w.y - v.y)**2;
+      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      let proj = { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) };
+      return Math.hypot(p.x - proj.x, p.y - proj.y);
+    }
+    
+    // === Ouverture de la vue détaillée ===
     function openDetailView(src) {
       detailImage.src = src;
       detailView.style.display = 'block';
       detailImage.onload = () => {
         adjustCanvas();
-        // Réinitialiser les formes pour cet exemple
         shapes = [];
         redrawShapes();
         proposalList.innerHTML = "";
         commentList.innerHTML = "";
       };
     }
-
+    
     // === Événements ===
-
-    // Upload de l'image
+    
+    // Upload d'image
     uploadBtn.addEventListener('click', () => {
       if(fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          const img = document.createElement('img');
+          let img = document.createElement('img');
           img.src = e.target.result;
           img.alt = "Village du clan";
-          img.addEventListener('click', () => {
-            openDetailView(img.src);
-          });
+          img.addEventListener('click', () => openDetailView(img.src));
           gallery.appendChild(img);
         };
         reader.readAsDataURL(fileInput.files[0]);
       }
     });
-
+    
     // Fermer la vue détaillée
     closeDetail.addEventListener('click', () => {
       detailView.style.display = 'none';
     });
-
-    // Effacer toutes les annotations et sorts
+    
+    // Effacer toutes annotations
     clearDraw.addEventListener('click', () => {
       shapes = [];
       redrawShapes();
     });
-
-    // Gestion du dessin sur le canvas (formes classiques)
+    
+    // Gestion du drag & drop des icônes de sorts
+    spellIcons.forEach(icon => {
+      icon.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', icon.src);
+      });
+    });
+    
+    annotationCanvas.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+    
+    annotationCanvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      let rect = annotationCanvas.getBoundingClientRect();
+      let dropX = e.clientX - rect.left;
+      let dropY = e.clientY - rect.top;
+      let spellSrc = e.dataTransfer.getData('text/plain');
+      let spellShape = {
+        type: 'spell',
+        x: dropX - 25,
+        y: dropY - 25,
+        width: 50,
+        height: 50,
+        icon: spellSrc
+      };
+      shapes.push(spellShape);
+      redrawShapes();
+    });
+    
+    // Bouton "Mode Déplacement" : active ou désactive le mode move
+    moveModeBtn.addEventListener('click', () => {
+      isMoveMode = !isMoveMode;
+      // Change l'apparence du bouton pour indiquer l'état
+      moveModeBtn.style.background = isMoveMode ? "#cc0000" : "#0066cc";
+    });
+    
+    // Gestion du dessin, déplacement et sélection
     annotationCanvas.addEventListener('mousedown', (e) => {
-      const rect = annotationCanvas.getBoundingClientRect();
+      let rect = annotationCanvas.getBoundingClientRect();
       startX = e.clientX - rect.left;
       startY = e.clientY - rect.top;
-      isDrawing = true;
-      if(shapeSelect.value === 'text') {
-        isDrawing = false;
-        const textShape = {
+      
+      // Si le mode déplacement est activé
+      if (isMoveMode) {
+        for (let i = shapes.length - 1; i >= 0; i--) {
+          if (isPointInShape(startX, startY, shapes[i])) {
+            selectedShape = shapes[i];
+            moveOffset.x = startX;
+            moveOffset.y = startY;
+            break;
+          }
+        }
+        return; // Sortir pour éviter de lancer un dessin
+      }
+      
+      // Sinon, utiliser l'outil sélectionné dans le sélecteur
+      let currentTool = shapeSelect.value;
+      if (currentTool === 'pencil') {
+        isDrawing = true;
+        currentPath = [{ x: startX, y: startY }];
+      }
+      else if (currentTool === 'text') {
+        let textShape = {
           type: 'text',
           startX: startX,
           startY: startY,
@@ -413,92 +504,126 @@
         shapes.push(textShape);
         redrawShapes();
       }
+      else {
+        isDrawing = true;
+      }
     });
-
+    
     annotationCanvas.addEventListener('mousemove', (e) => {
-      if(!isDrawing || shapeSelect.value === 'text') return;
-      redrawShapes();
-      const rect = annotationCanvas.getBoundingClientRect();
-      const currentX = e.clientX - rect.left;
-      const currentY = e.clientY - rect.top;
-      context.strokeStyle = colorPicker.value;
-      context.lineWidth = lineWidthInput.value;
-      switch(shapeSelect.value) {
-        case 'rectangle':
+      let rect = annotationCanvas.getBoundingClientRect();
+      let currentX = e.clientX - rect.left;
+      let currentY = e.clientY - rect.top;
+      let currentTool = shapeSelect.value;
+      
+      if (isMoveMode && selectedShape) {
+        let dx = currentX - moveOffset.x;
+        let dy = currentY - moveOffset.y;
+        moveOffset.x = currentX;
+        moveOffset.y = currentY;
+        if (selectedShape.type === 'rectangle' || selectedShape.type === 'circle' ||
+            selectedShape.type === 'line' || selectedShape.type === 'text') {
+          selectedShape.startX += dx;
+          selectedShape.startY += dy;
+          selectedShape.endX += dx;
+          selectedShape.endY += dy;
+        } else if (selectedShape.type === 'freehand') {
+          selectedShape.points = selectedShape.points.map(pt => ({ x: pt.x + dx, y: pt.y + dy }));
+        } else if (selectedShape.type === 'spell') {
+          selectedShape.x += dx;
+          selectedShape.y += dy;
+        }
+        redrawShapes();
+        return;
+      }
+      
+      if (currentTool === 'pencil' && isDrawing) {
+        currentPath.push({ x: currentX, y: currentY });
+        redrawShapes();
+        context.strokeStyle = colorPicker.value;
+        context.lineWidth = lineWidthInput.value;
+        context.beginPath();
+        context.moveTo(currentPath[0].x, currentPath[0].y);
+        currentPath.forEach(pt => context.lineTo(pt.x, pt.y));
+        context.stroke();
+      }
+      else if (isDrawing && (currentTool === 'rectangle' || currentTool === 'circle' || currentTool === 'line')) {
+        redrawShapes();
+        context.strokeStyle = colorPicker.value;
+        context.lineWidth = lineWidthInput.value;
+        if (currentTool === 'rectangle') {
           context.strokeRect(startX, startY, currentX - startX, currentY - startY);
-          break;
-        case 'circle':
-          const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+        } else if (currentTool === 'circle') {
+          let radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
           context.beginPath();
           context.arc(startX, startY, radius, 0, 2 * Math.PI);
           context.stroke();
-          break;
-        case 'line':
+        } else if (currentTool === 'line') {
           context.beginPath();
           context.moveTo(startX, startY);
           context.lineTo(currentX, currentY);
           context.stroke();
-          break;
+        }
       }
     });
-
+    
     annotationCanvas.addEventListener('mouseup', (e) => {
-      if(!isDrawing || shapeSelect.value === 'text') return;
-      const rect = annotationCanvas.getBoundingClientRect();
-      const endX = e.clientX - rect.left;
-      const endY = e.clientY - rect.top;
-      isDrawing = false;
-      const shapeObj = {
-        type: shapeSelect.value,
-        startX: startX,
-        startY: startY,
-        endX: endX,
-        endY: endY,
-        color: colorPicker.value,
-        lineWidth: parseInt(lineWidthInput.value),
-        textValue: textValueInput.value
-      };
-      shapes.push(shapeObj);
-      redrawShapes();
+      let rect = annotationCanvas.getBoundingClientRect();
+      let endX = e.clientX - rect.left;
+      let endY = e.clientY - rect.top;
+      let currentTool = shapeSelect.value;
+      
+      if (isMoveMode) {
+        selectedShape = null;
+        return;
+      }
+      
+      if (currentTool === 'pencil' && isDrawing) {
+        isDrawing = false;
+        let pencilShape = {
+          type: 'freehand',
+          points: currentPath,
+          color: colorPicker.value,
+          lineWidth: parseInt(lineWidthInput.value)
+        };
+        shapes.push(pencilShape);
+        currentPath = [];
+        redrawShapes();
+      }
+      else if (isDrawing && (currentTool === 'rectangle' || currentTool === 'circle' || currentTool === 'line')) {
+        isDrawing = false;
+        let shapeObj = {
+          type: currentTool,
+          startX: startX,
+          startY: startY,
+          endX: endX,
+          endY: endY,
+          color: colorPicker.value,
+          lineWidth: parseInt(lineWidthInput.value),
+          textValue: textValueInput.value
+        };
+        shapes.push(shapeObj);
+        redrawShapes();
+      }
     });
-
-    // === Gestion du dépôt de sorts via Drag & Drop ===
-
-    // Rendre les icônes de sorts draggables
-    spellIcons.forEach(icon => {
-      icon.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', icon.src);
-      });
+    
+    // Suppression individuelle par double-clic
+    annotationCanvas.addEventListener('dblclick', (e) => {
+      let rect = annotationCanvas.getBoundingClientRect();
+      let x = e.clientX - rect.left;
+      let y = e.clientY - rect.top;
+      for (let i = shapes.length - 1; i >= 0; i--) {
+        if (isPointInShape(x, y, shapes[i])) {
+          shapes.splice(i, 1);
+          redrawShapes();
+          break;
+        }
+      }
     });
-
-    // Autoriser le drop sur le canvas
-    annotationCanvas.addEventListener('dragover', (e) => {
-      e.preventDefault();
-    });
-
-    annotationCanvas.addEventListener('drop', (e) => {
-      e.preventDefault();
-      const rect = annotationCanvas.getBoundingClientRect();
-      const dropX = e.clientX - rect.left;
-      const dropY = e.clientY - rect.top;
-      const spellSrc = e.dataTransfer.getData('text/plain');
-      // Enregistrer le sort déposé dans le tableau shapes
-      const spellShape = {
-        type: 'spell',
-        x: dropX - 25, // centrer l'icône (si 50x50)
-        y: dropY - 25,
-        width: 50,
-        height: 50,
-        icon: spellSrc
-      };
-      shapes.push(spellShape);
-      redrawShapes();
-    });
-
-    // Propositions d'attaque
+    
+    // Propositions
     addProposal.addEventListener('click', () => {
-      if(proposalTitle.value.trim() !== "" && proposalText.value.trim() !== "") {
-        const div = document.createElement('div');
+      if (proposalTitle.value.trim() !== "" && proposalText.value.trim() !== "") {
+        let div = document.createElement('div');
         div.className = 'proposal';
         div.innerHTML = `<strong>${proposalTitle.value}</strong>
                          <p>${proposalText.value}</p>
@@ -511,11 +636,11 @@
         proposalText.value = "";
       }
     });
-
+    
     // Commentaires
     addComment.addEventListener('click', () => {
-      if(commentText.value.trim() !== "") {
-        const div = document.createElement('div');
+      if (commentText.value.trim() !== "") {
+        let div = document.createElement('div');
         div.className = 'comment';
         div.innerHTML = `<p>${commentText.value}</p>
                          <button class="deleteComment">Supprimer</button>`;
