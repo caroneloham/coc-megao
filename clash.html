@@ -1,679 +1,795 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Site Interactif de Stratégies - Clan CoC</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f4f4f4;
-    }
-    header {
-      background: #333;
-      color: #fff;
-      padding: 10px;
-      text-align: center;
-    }
-    main { padding: 20px; }
-    .gallery {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .gallery img {
-      width: 200px;
-      height: auto;
-      cursor: pointer;
-      border: 2px solid #ccc;
-      transition: transform 0.2s;
-    }
-    .gallery img:hover { transform: scale(1.05); }
-    .form-section {
-      margin-bottom: 20px;
-      background: #fff;
-      padding: 15px;
-      border: 1px solid #ddd;
-    }
-    .form-section input[type="text"],
-    .form-section textarea {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0 10px;
-      border: 1px solid #ccc;
-    }
-    .form-section button {
-      padding: 8px 12px;
-      border: none;
-      background: #333;
-      color: #fff;
-      cursor: pointer;
-    }
-    /* Popup Détail */
-    #detailView {
-      display: none;
-      position: fixed;
-      top: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80%;
-      max-width: 1000px;
-      max-height: 90vh;
-      overflow-y: auto;
-      background: #fff;
-      border: 2px solid #333;
-      z-index: 1000;
-      padding: 15px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-    #detailView header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    #detailView header h2 { margin: 0; }
-    #closeDetail {
-      cursor: pointer;
-      font-size: 1.2em;
-      background: none;
-      border: none;
-      color: #333;
-    }
-    #canvasContainer {
-      position: relative;
-      width: 100%;
-      text-align: center;
-    }
-    #detailImage {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-    #annotationCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    /* Outils d'annotation */
-    .annotation-tools {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 10px 0;
-      align-items: center;
-    }
-    .annotation-tools select,
-    .annotation-tools input[type="color"],
-    .annotation-tools input[type="number"],
-    .annotation-tools input[type="text"] {
-      padding: 5px;
-      margin-right: 5px;
-    }
-    /* Bouton déplacement */
-    #moveModeBtn {
-      padding: 5px 10px;
-      background: #0066cc;
-      border: none;
-      color: #fff;
-      cursor: pointer;
-    }
-    /* Section Sorts */
-    .spell-container {
-      background: #fff;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-    }
-    .spell-container h3 { margin-top: 0; }
-    .spell-icons {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .spell-icons img {
-      width: 50px;
-      height: 50px;
-      cursor: grab;
-      border: 1px solid #ccc;
-      transition: transform 0.2s;
-    }
-    .spell-icons img:hover { transform: scale(1.1); }
-    /* Commentaires et Propositions */
-    .comment, .proposal {
-      background: #eee;
-      padding: 10px;
-      margin: 5px 0;
-      border-left: 4px solid #333;
-    }
-    .comment button, .proposal button {
-      margin-top: 5px;
-      padding: 5px 10px;
-      background: #999;
-      border: none;
-      cursor: pointer;
-      color: #fff;
-    }
-    /* Responsive */
-    @media(max-width: 600px) {
-      .gallery img { width: 100px; }
-      #detailView { width: 90%; top: 2%; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyseur de Bases CoC - Exportable</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 15px;
+            background-color: #e8f0f5;
+        }
+
+        .column {
+            flex: 1;
+            min-width: 450px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Container for layered canvases */
+        #canvasContainer {
+            position: relative; /* Crucial for absolute positioning inside */
+            width: 100%;
+            max-width: 700px;
+            height: 500px; /* Match canvas height */
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            background-color: #ffffff; /* Fallback background */
+            overflow: hidden;
+        }
+
+        /* Layered Canvases */
+        #backgroundCanvas, #drawingCanvas {
+            display: block;
+            position: absolute; /* Stack them */
+            top: 0;
+            left: 0;
+            width: 100%; /* Fit container */
+            height: 100%; /* Fit container */
+        }
+
+        #backgroundCanvas {
+            z-index: 1; /* Background layer */
+            background-color: #ffffff; /* Ensure it has a background */
+        }
+
+        #drawingCanvas {
+            z-index: 2; /* Drawing layer on top */
+            background-color: transparent; /* MUST be transparent */
+            cursor: crosshair; /* Cursor on the top layer */
+        }
+
+
+        .controls-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .controls-section:last-child {
+            border-bottom: none;
+        }
+
+        .controls-section h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        button, select, input[type="text"], input[type="file"] {
+            padding: 8px 12px;
+            margin: 5px 5px 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+            background-color: #f8f8f8;
+            transition: background-color 0.2s ease;
+            vertical-align: middle;
+        }
+        input[type="file"] { cursor: pointer; }
+        button:hover, select:hover { background-color: #e9e9e9; }
+        button:active { background-color: #dcdcdc; }
+
+        .tool-btn.active, .color-btn.active {
+            border-width: 2px;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            background-color: #e0efff;
+        }
+
+        .color-btn { min-width: 60px; text-align: center;}
+        .color-btn[data-color="red"] { background-color: #e74c3c; color: white; }
+        .color-btn[data-color="blue"] { background-color: #3498db; color: white; }
+        .color-btn[data-color="green"] { background-color: #2ecc71; color: white; }
+        .color-btn[data-color="black"] { background-color: #34495e; color: white; }
+        .color-btn[data-color="yellow"] { background-color: #f1c40f; color: black; }
+        .color-btn[data-color="purple"] { background-color: #9b59b6; color: white; }
+        .color-btn[data-color="white"] { background-color: #ecf0f1; color: black; }
+
+        #analysisNotes {
+            width: 95%;
+            height: 150px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            margin-top: 5px;
+            resize: vertical;
+        }
+
+        #savedAnalysesDropdown { width: calc(100% - 24px); margin-bottom: 10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        #analysisNameInput { width: calc(100% - 130px); margin-right: 5px; }
+        .button-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .file-input-label { display: inline-block; padding: 8px 12px; background-color: #5cb85c; color: white; border-radius: 4px; cursor: pointer; margin: 5px 0; }
+        .file-input-label:hover { background-color: #4cae4c; }
+        #bgImageUpload { display: none; }
+        #fileNameDisplay { margin-left: 10px; font-style: italic; color: #777; font-size: 0.9em; }
+        .tooltip { font-size: 0.85em; color: #666; margin-left: 5px; }
+
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Site Interactif pour le Clan - Clash of Clans</h1>
-  </header>
-  <main>
-    <!-- Upload d'image -->
-    <section class="form-section" id="uploadSection">
-      <h2>Uploader une image de village</h2>
-      <input type="file" id="fileInput" accept="image/*">
-      <button id="uploadBtn">Uploader</button>
-    </section>
-    <!-- Galerie -->
-    <section>
-      <h2>Galerie des villages</h2>
-      <div class="gallery" id="gallery"></div>
-    </section>
-  </main>
-  
-  <!-- Vue détaillée et interactive -->
-  <div id="detailView">
-    <header>
-      <h2>Détail du Village</h2>
-      <button id="closeDetail">X</button>
-    </header>
-    <!-- Conteneur image + canvas -->
-    <div id="canvasContainer">
-      <img id="detailImage" src="" alt="Village">
-      <canvas id="annotationCanvas"></canvas>
+
+    <div class="column">
+        <h2>Zone de Dessin et Outils</h2>
+
+        <div class="controls-section">
+            <h3>Charger Image de Fond</h3>
+             <div class="button-group">
+                <label for="bgImageUpload" class="file-input-label">🖼️ Choisir une image</label>
+                <input type="file" id="bgImageUpload" accept="image/*">
+                <span id="fileNameDisplay">Aucun fichier choisi</span>
+                <button id="removeBgButton" style="background-color: #d9534f; color: white;">❌ Supprimer Fond</button>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div id="canvasContainer">
+             <canvas id="backgroundCanvas">Fond</canvas>
+             <canvas id="drawingCanvas">Dessin</canvas>
+        </div>
+        <!-- End Canvas Container -->
+
+        <div class="controls-section">
+            <h3>Outils de Dessin</h3>
+             <div class="button-group">
+                <button id="toolPencil" class="tool-btn active" data-tool="pencil">✏️ Crayon/Flèche</button>
+                <button id="toolText" class="tool-btn" data-tool="text"> T Texte</button>
+                <button id="toolEraser" class="tool-btn" data-tool="eraser">🧼 Gomme</button>
+                <button id="clearCanvasButton">🗑️ Effacer Dessins</button>
+            </div>
+        </div>
+
+        <div class="controls-section">
+             <h3>Marqueurs & Zones <span class="tooltip">(Clic ou Clic & Glisser pour sorts)</span></h3>
+             <div class="button-group">
+                 <button class="tool-btn marker-btn" data-tool="marker" data-marker="troop_ground">👤 Terreste</button>
+                 <button class="tool-btn marker-btn" data-tool="marker" data-marker="troop_air">🐉 Aérien</button>
+                 <button class="tool-btn marker-btn" data-tool="marker" data-marker="hero">👑 Héros</button>
+                 <button class="tool-btn marker-btn" data-tool="marker" data-marker="spell_heal" data-resizable="true">✨ Soin</button>
+                 <button class="tool-btn marker-btn" data-tool="marker" data-marker="spell_rage" data-resizable="true">🟣 Rage</button>
+                 <button class="tool-btn marker-btn" data-tool="marker" data-marker="spell_area" data-resizable="true">⭕ Zone Sort</button>
+                 <button class="tool-btn marker-btn" data-tool="marker" data-marker="target">🎯 Cible</button>
+             </div>
+         </div>
+
+        <div class="controls-section">
+            <h3>Couleurs <span class="tooltip">(Crayon, Texte, Marqueurs)</span></h3>
+             <div class="button-group">
+                <button class="color-btn active" data-color="red">Rouge</button>
+                <button class="color-btn" data-color="blue">Bleu</button>
+                <button class="color-btn" data-color="green">Vert</button>
+                <button class="color-btn" data-color="black">Noir</button>
+                <button class="color-btn" data-color="yellow">Jaune</button>
+                <button class="color-btn" data-color="purple">Violet</button>
+                <button class="color-btn" data-color="white">Blanc</button>
+            </div>
+        </div>
     </div>
-    <!-- Outils d'annotation -->
-    <div class="annotation-tools">
-      <label for="shapeSelect">Outil :</label>
-      <!-- Le crayon est l'outil par défaut -->
-      <select id="shapeSelect">
-        <option value="pencil" selected>Crayon</option>
-        <option value="rectangle">Rectangle</option>
-        <option value="circle">Cercle</option>
-        <option value="line">Ligne</option>
-        <option value="text">Texte</option>
-      </select>
-      <label for="colorPicker">Couleur :</label>
-      <input type="color" id="colorPicker" value="#ff0000">
-      <label for="lineWidth">Épaisseur :</label>
-      <input type="number" id="lineWidth" value="2" min="1" max="10" style="width:60px;">
-      <label for="textValue">Texte :</label>
-      <input type="text" id="textValue" placeholder="Saisir texte...">
-      <button id="clearDraw">Effacer Toutes Annotations</button>
-      <!-- Bouton mode déplacement accessible séparément -->
-      <button id="moveModeBtn">Mode Déplacement</button>
+
+    <div class="column">
+        <h2>Analyse & Sauvegarde</h2>
+
+        <div class="controls-section">
+            <label for="analysisNotes">Commentaires / Composition d'armée :</label>
+            <textarea id="analysisNotes" placeholder="Entrez vos notes ici..."></textarea>
+        </div>
+
+        <div class="controls-section">
+            <h3>Sauvegarder l'Analyse</h3>
+             <div class="button-group">
+                 <input type="text" id="analysisNameInput" placeholder="Nom de l'analyse" required>
+                 <button id="saveAnalysisButton">💾 Sauvegarder</button>
+             </div>
+        </div>
+
+        <div class="controls-section">
+            <h3>Charger / Supprimer une Analyse</h3>
+            <label for="savedAnalysesDropdown">Analyses Sauvegardées :</label>
+            <select id="savedAnalysesDropdown">
+                <option value="">-- Sélectionnez --</option>
+            </select>
+             <div class="button-group" style="margin-top: 10px;">
+                <button id="deleteAnalysisButton">❌ Supprimer Sélection</button>
+            </div>
+        </div>
+
+         <div class="controls-section">
+            <h3>Exporter</h3>
+             <div class="button-group">
+                <button id="exportAnalysisButton">📤 Exporter en PNG</button>
+             </div>
+        </div>
+
     </div>
-    
-    <!-- Section Sorts -->
-    <div class="spell-container">
-      <h3>Déposer un sort</h3>
-      <div class="spell-icons">
-        <!-- Icônes de sorts Clash of Clans (exemples) -->
-        <img src="https://vignette.wikia.nocookie.net/clashofclans/images/6/69/Healing_Spell_icon.png" alt="Sort Heal" draggable="true" class="spell-icon">
-        <img src="https://vignette.wikia.nocookie.net/clashofclans/images/5/56/Rage_Spell_icon.png" alt="Sort Rage" draggable="true" class="spell-icon">
-        <img src="https://vignette.wikia.nocookie.net/clashofclans/images/4/40/Freeze_Spell_icon.png" alt="Sort Freeze" draggable="true" class="spell-icon">
-      </div>
-    </div>
-    
-    <!-- Propositions -->
-    <section class="form-section">
-      <h3>Proposer une stratégie d'attaque</h3>
-      <input type="text" id="proposalTitle" placeholder="Titre de la proposition">
-      <textarea id="proposalText" rows="3" placeholder="Détaillez votre stratégie..."></textarea>
-      <button id="addProposal">Ajouter Proposition</button>
-      <div id="proposalList"></div>
-    </section>
-    <!-- Commentaires -->
-    <section class="form-section">
-      <h3>Commentaires</h3>
-      <textarea id="commentText" rows="2" placeholder="Votre commentaire..."></textarea>
-      <button id="addComment">Ajouter Commentaire</button>
-      <div id="commentList"></div>
-    </section>
-  </div>
-  
-  <script>
-    // === Variables globales ===
-    const gallery = document.getElementById('gallery');
-    const fileInput = document.getElementById('fileInput');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const detailView = document.getElementById('detailView');
-    const closeDetail = document.getElementById('closeDetail');
-    const detailImage = document.getElementById('detailImage');
-    const annotationCanvas = document.getElementById('annotationCanvas');
-    const canvasContainer = document.getElementById('canvasContainer');
-    
-    // Outils d'annotation
-    const shapeSelect = document.getElementById('shapeSelect');
-    const colorPicker = document.getElementById('colorPicker');
-    const lineWidthInput = document.getElementById('lineWidth');
-    const textValueInput = document.getElementById('textValue');
-    const clearDraw = document.getElementById('clearDraw');
-    const moveModeBtn = document.getElementById('moveModeBtn');
-    
-    // Propositions / Commentaires
-    const proposalTitle = document.getElementById('proposalTitle');
-    const proposalText = document.getElementById('proposalText');
-    const addProposal = document.getElementById('addProposal');
-    const proposalList = document.getElementById('proposalList');
-    const commentText = document.getElementById('commentText');
-    const addComment = document.getElementById('addComment');
-    const commentList = document.getElementById('commentList');
-    
-    // Icônes de sorts
-    const spellIcons = document.querySelectorAll('.spell-icon');
-    
-    let context;
-    let shapes = []; // Stocke toutes les annotations, dessins, textes, sorts...
-    let isDrawing = false;
-    let currentPath = []; // Pour le crayon (freehand)
-    let selectedShape = null; // Pour le déplacement
-    let moveOffset = { x: 0, y: 0 };
-    let startX, startY;
-    
-    // Mode déplacement (indépendant du sélecteur)
-    let isMoveMode = false;
-    
-    // Sauvegarde dans le localStorage pour l'image en cours
-    function saveAnnotations() {
-      if (detailImage.src) {
-        localStorage.setItem("annotations_" + detailImage.src, JSON.stringify(shapes));
-      }
-    }
-    
-    // Chargement des annotations sauvegardées pour l'image
-    function loadAnnotations() {
-      const data = localStorage.getItem("annotations_" + detailImage.src);
-      if (data) {
-        shapes = JSON.parse(data);
-      }
-    }
-    
-    // === Ajustement du canvas ===
-    function adjustCanvas() {
-      annotationCanvas.width = detailImage.clientWidth;
-      annotationCanvas.height = detailImage.clientHeight;
-      annotationCanvas.style.width = detailImage.clientWidth + 'px';
-      annotationCanvas.style.height = detailImage.clientHeight + 'px';
-      context = annotationCanvas.getContext('2d');
-      redrawShapes();
-    }
-    
-    // Redessine toutes les annotations
-    function redrawShapes() {
-      if (!context) return;
-      context.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
-      shapes.forEach(shape => drawShape(shape));
-    }
-    
-    // Dessine une annotation selon son type
-    function drawShape(shape) {
-      if (shape.type === 'spell') {
-        const img = new Image();
-        img.src = shape.icon;
-        img.onload = () => {
-          context.drawImage(img, shape.x, shape.y, shape.width, shape.height);
-        };
-      } else if (shape.type === 'freehand') {
-        if (shape.points.length > 0) {
-          context.strokeStyle = shape.color;
-          context.lineWidth = shape.lineWidth;
-          context.beginPath();
-          context.moveTo(shape.points[0].x, shape.points[0].y);
-          shape.points.forEach(pt => context.lineTo(pt.x, pt.y));
-          context.stroke();
-        }
-      } else {
-        context.strokeStyle = shape.color;
-        context.lineWidth = shape.lineWidth;
-        context.fillStyle = shape.color;
-        switch(shape.type) {
-          case 'rectangle':
-            context.strokeRect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
-            break;
-          case 'circle':
-            let radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
-            context.beginPath();
-            context.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
-            context.stroke();
-            break;
-          case 'line':
-            context.beginPath();
-            context.moveTo(shape.startX, shape.startY);
-            context.lineTo(shape.endX, shape.endY);
-            context.stroke();
-            break;
-          case 'text':
-            let fontSize = parseInt(shape.lineWidth) * 8;
-            context.font = fontSize + "px Arial";
-            context.fillText(shape.textValue, shape.startX, shape.startY);
-            break;
-        }
-      }
-    }
-    
-    // Détection de clic sur une annotation (pour suppression ou déplacement)
-    function isPointInShape(x, y, shape) {
-      const margin = 5;
-      if (shape.type === 'rectangle' || shape.type === 'text') {
-        let minX = Math.min(shape.startX, shape.endX);
-        let maxX = Math.max(shape.startX, shape.endX);
-        let minY = Math.min(shape.startY, shape.endY);
-        let maxY = Math.max(shape.startY, shape.endY);
-        return (x >= minX - margin && x <= maxX + margin && y >= minY - margin && y <= maxY + margin);
-      } else if (shape.type === 'circle') {
-        let radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
-        let dist = Math.sqrt(Math.pow(x - shape.startX, 2) + Math.pow(y - shape.startY, 2));
-        return (dist <= radius + margin);
-      } else if (shape.type === 'line') {
-        let A = { x: shape.startX, y: shape.startY };
-        let B = { x: shape.endX, y: shape.endY };
-        let distLine = distanceToSegment({x, y}, A, B);
-        return (distLine <= margin);
-      } else if (shape.type === 'freehand') {
-        let xs = shape.points.map(p => p.x);
-        let ys = shape.points.map(p => p.y);
-        let minX = Math.min(...xs), maxX = Math.max(...xs);
-        let minY = Math.min(...ys), maxY = Math.max(...ys);
-        return (x >= minX - margin && x <= maxX + margin && y >= minY - margin && y <= maxY + margin);
-      } else if (shape.type === 'spell') {
-        return (x >= shape.x && x <= shape.x + shape.width &&
-                y >= shape.y && y <= shape.y + shape.height);
-      }
-      return false;
-    }
-    
-    // Utilitaire : distance d'un point à un segment
-    function distanceToSegment(p, v, w) {
-      let l2 = (w.x - v.x)**2 + (w.y - v.y)**2;
-      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
-      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-      t = Math.max(0, Math.min(1, t));
-      let proj = { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) };
-      return Math.hypot(p.x - proj.x, p.y - proj.y);
-    }
-    
-    // Ouverture de la vue détaillée pour une image
-    function openDetailView(src) {
-      detailImage.src = src;
-      detailView.style.display = 'block';
-      detailImage.onload = () => {
-        adjustCanvas();
-        // Charger les annotations sauvegardées (si présentes)
-        loadAnnotations();
-        redrawShapes();
-        proposalList.innerHTML = "";
-        commentList.innerHTML = "";
-      };
-    }
-    
-    // === Événements ===
-    
-    // Upload d'image
-    uploadBtn.addEventListener('click', () => {
-      if(fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          let img = document.createElement('img');
-          img.src = e.target.result;
-          img.alt = "Village du clan";
-          img.addEventListener('click', () => openDetailView(img.src));
-          gallery.appendChild(img);
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-      }
-    });
-    
-    // Fermer la vue détaillée
-    closeDetail.addEventListener('click', () => {
-      detailView.style.display = 'none';
-    });
-    
-    // Effacer toutes annotations
-    clearDraw.addEventListener('click', () => {
-      shapes = [];
-      redrawShapes();
-      saveAnnotations();
-    });
-    
-    // Gestion du drag & drop des icônes de sorts
-    spellIcons.forEach(icon => {
-      icon.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', icon.src);
-      });
-    });
-    
-    annotationCanvas.addEventListener('dragover', (e) => {
-      e.preventDefault();
-    });
-    
-    annotationCanvas.addEventListener('drop', (e) => {
-      e.preventDefault();
-      let rect = annotationCanvas.getBoundingClientRect();
-      let dropX = e.clientX - rect.left;
-      let dropY = e.clientY - rect.top;
-      let spellSrc = e.dataTransfer.getData('text/plain');
-      let spellShape = {
-        type: 'spell',
-        x: dropX - 25,
-        y: dropY - 25,
-        width: 50,
-        height: 50,
-        icon: spellSrc
-      };
-      shapes.push(spellShape);
-      redrawShapes();
-      saveAnnotations();
-    });
-    
-    // Bouton "Mode Déplacement" : active/désactive le mode déplacement
-    moveModeBtn.addEventListener('click', () => {
-      isMoveMode = !isMoveMode;
-      moveModeBtn.style.background = isMoveMode ? "#cc0000" : "#0066cc";
-    });
-    
-    // Gestion des interactions sur le canvas
-    annotationCanvas.addEventListener('mousedown', (e) => {
-      let rect = annotationCanvas.getBoundingClientRect();
-      startX = e.clientX - rect.left;
-      startY = e.clientY - rect.top;
-      
-      // Si mode déplacement est activé
-      if (isMoveMode) {
-        for (let i = shapes.length - 1; i >= 0; i--) {
-          if (isPointInShape(startX, startY, shapes[i])) {
-            selectedShape = shapes[i];
-            moveOffset.x = startX;
-            moveOffset.y = startY;
-            break;
-          }
-        }
-        return; // Ne pas initier un nouveau dessin
-      }
-      
-      // Utiliser l'outil sélectionné
-      let currentTool = shapeSelect.value;
-      if (currentTool === 'pencil') {
-        isDrawing = true;
-        currentPath = [{ x: startX, y: startY }];
-      }
-      else if (currentTool === 'text') {
-        let textShape = {
-          type: 'text',
-          startX: startX,
-          startY: startY,
-          endX: startX,
-          endY: startY,
-          color: colorPicker.value,
-          lineWidth: parseInt(lineWidthInput.value),
-          textValue: textValueInput.value || "Texte"
-        };
-        shapes.push(textShape);
-        redrawShapes();
-        saveAnnotations();
-      }
-      else {
-        isDrawing = true;
-      }
-    });
-    
-    annotationCanvas.addEventListener('mousemove', (e) => {
-      let rect = annotationCanvas.getBoundingClientRect();
-      let currentX = e.clientX - rect.left;
-      let currentY = e.clientY - rect.top;
-      let currentTool = shapeSelect.value;
-      
-      if (isMoveMode && selectedShape) {
-        let dx = currentX - moveOffset.x;
-        let dy = currentY - moveOffset.y;
-        moveOffset.x = currentX;
-        moveOffset.y = currentY;
-        if (selectedShape.type === 'rectangle' || selectedShape.type === 'circle' ||
-            selectedShape.type === 'line' || selectedShape.type === 'text') {
-          selectedShape.startX += dx;
-          selectedShape.startY += dy;
-          selectedShape.endX += dx;
-          selectedShape.endY += dy;
-        } else if (selectedShape.type === 'freehand') {
-          selectedShape.points = selectedShape.points.map(pt => ({ x: pt.x + dx, y: pt.y + dy }));
-        } else if (selectedShape.type === 'spell') {
-          selectedShape.x += dx;
-          selectedShape.y += dy;
-        }
-        redrawShapes();
-        saveAnnotations();
-        return;
-      }
-      
-      if (currentTool === 'pencil' && isDrawing) {
-        currentPath.push({ x: currentX, y: currentY });
-        redrawShapes();
-        context.strokeStyle = colorPicker.value;
-        context.lineWidth = lineWidthInput.value;
-        context.beginPath();
-        context.moveTo(currentPath[0].x, currentPath[0].y);
-        currentPath.forEach(pt => context.lineTo(pt.x, pt.y));
-        context.stroke();
-      }
-      else if (isDrawing && (currentTool === 'rectangle' || currentTool === 'circle' || currentTool === 'line')) {
-        redrawShapes();
-        context.strokeStyle = colorPicker.value;
-        context.lineWidth = lineWidthInput.value;
-        if (currentTool === 'rectangle') {
-          context.strokeRect(startX, startY, currentX - startX, currentY - startY);
-        } else if (currentTool === 'circle') {
-          let radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
-          context.beginPath();
-          context.arc(startX, startY, radius, 0, 2 * Math.PI);
-          context.stroke();
-        } else if (currentTool === 'line') {
-          context.beginPath();
-          context.moveTo(startX, startY);
-          context.lineTo(currentX, currentY);
-          context.stroke();
-        }
-      }
-    });
-    
-    annotationCanvas.addEventListener('mouseup', (e) => {
-      let rect = annotationCanvas.getBoundingClientRect();
-      let endX = e.clientX - rect.left;
-      let endY = e.clientY - rect.top;
-      let currentTool = shapeSelect.value;
-      
-      if (isMoveMode) {
-        selectedShape = null;
-        return;
-      }
-      
-      if (currentTool === 'pencil' && isDrawing) {
-        isDrawing = false;
-        let pencilShape = {
-          type: 'freehand',
-          points: currentPath,
-          color: colorPicker.value,
-          lineWidth: parseInt(lineWidthInput.value)
-        };
-        shapes.push(pencilShape);
-        currentPath = [];
-        redrawShapes();
-        saveAnnotations();
-      }
-      else if (isDrawing && (currentTool === 'rectangle' || currentTool === 'circle' || currentTool === 'line')) {
-        isDrawing = false;
-        let shapeObj = {
-          type: currentTool,
-          startX: startX,
-          startY: startY,
-          endX: endX,
-          endY: endY,
-          color: colorPicker.value,
-          lineWidth: parseInt(lineWidthInput.value),
-          textValue: textValueInput.value
-        };
-        shapes.push(shapeObj);
-        redrawShapes();
-        saveAnnotations();
-      }
-    });
-    
-    // Suppression individuelle par double-clic
-    annotationCanvas.addEventListener('dblclick', (e) => {
-      let rect = annotationCanvas.getBoundingClientRect();
-      let x = e.clientX - rect.left;
-      let y = e.clientY - rect.top;
-      for (let i = shapes.length - 1; i >= 0; i--) {
-        if (isPointInShape(x, y, shapes[i])) {
-          shapes.splice(i, 1);
-          redrawShapes();
-          saveAnnotations();
-          break;
-        }
-      }
-    });
-    
-    // Propositions d'attaque
-    addProposal.addEventListener('click', () => {
-      if (proposalTitle.value.trim() !== "" && proposalText.value.trim() !== "") {
-        let div = document.createElement('div');
-        div.className = 'proposal';
-        div.innerHTML = `<strong>${proposalTitle.value}</strong>
-                         <p>${proposalText.value}</p>
-                         <button class="deleteProposal">Supprimer</button>`;
-        div.querySelector('.deleteProposal').addEventListener('click', () => {
-          proposalList.removeChild(div);
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const canvasContainer = document.getElementById('canvasContainer');
+            const backgroundCanvas = document.getElementById('backgroundCanvas'); // Background Layer
+            const drawingCanvas = document.getElementById('drawingCanvas');     // Drawing Layer
+            const bgCtx = backgroundCanvas.getContext('2d');
+            const drawCtx = drawingCanvas.getContext('2d'); // DRAW ON THIS context
+
+            const analysisNotes = document.getElementById('analysisNotes');
+            const saveAnalysisButton = document.getElementById('saveAnalysisButton');
+            const analysisNameInput = document.getElementById('analysisNameInput');
+            const savedAnalysesDropdown = document.getElementById('savedAnalysesDropdown');
+            const deleteAnalysisButton = document.getElementById('deleteAnalysisButton');
+            const clearCanvasButton = document.getElementById('clearCanvasButton');
+            const bgImageUpload = document.getElementById('bgImageUpload');
+            const removeBgButton = document.getElementById('removeBgButton');
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            const toolButtons = document.querySelectorAll('.tool-btn');
+            const colorButtons = document.querySelectorAll('.color-btn');
+            const exportAnalysisButton = document.getElementById('exportAnalysisButton');
+
+            // --- Constants ---
+            const STORAGE_KEY = 'clashAnalyses_v4'; // Incremented version for new structure
+            const ERASER_WIDTH = 25;
+            const PENCIL_WIDTH = 3;
+            const TEXT_FONT = 'bold 16px Arial';
+            const MARKER_SIZE = 20;
+            const DRAGON_FONT_SIZE = 24;
+            const STICKMAN_LINE_WIDTH = 2;
+            const SPELL_AREA_ALPHA = 0.4;
+            const DEFAULT_SPELL_RADIUS = 35;
+            const EXPORT_TEXT_PADDING = 15;
+            const EXPORT_TEXT_LINE_HEIGHT = 20;
+            const EXPORT_TEXT_FONT = '14px monospace';
+            const EXPORT_BG_COLOR = '#FFFFFF';
+
+            // --- State Variables ---
+            let isDrawing = false;
+            let isResizingSpell = false;
+            let lastX = 0, lastY = 0;
+            let spellCenterX = 0, spellCenterY = 0;
+            let spellCurrentRadius = 0;
+            let canvasStateBeforeResize = null; // Stores ImageData of drawingCanvas
+
+            let currentTool = 'pencil';
+            let currentMarkerType = '';
+            let isMarkerResizable = false;
+            let currentColor = 'red';
+
+            let backgroundImage = null;
+            let backgroundImageDataUrl = null; // Only store for saving/loading
+
+            // --- Canvas Setup & Drawing ---
+            function resizeCanvas() {
+                // Set both canvases to the container's size
+                const width = canvasContainer.offsetWidth;
+                const height = canvasContainer.offsetHeight;
+
+                backgroundCanvas.width = width;
+                backgroundCanvas.height = height;
+                drawingCanvas.width = width;
+                drawingCanvas.height = height;
+
+                console.log(`Canvases resized to: ${width}x${height}`);
+                // Redraw background and restore overlay if possible (e.g., from saved state)
+                redrawBackground();
+                // Note: Drawings on drawingCanvas might be lost on resize unless loaded/redrawn
+            }
+
+             function drawBackground() {
+                 // Clear background canvas first
+                 bgCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+
+                 if (backgroundImage) {
+                     const hRatio = backgroundCanvas.width / backgroundImage.width;
+                     const vRatio = backgroundCanvas.height / backgroundImage.height;
+                     const ratio = Math.min(hRatio, vRatio);
+                     const centerShift_x = (backgroundCanvas.width - backgroundImage.width * ratio) / 2;
+                     const centerShift_y = (backgroundCanvas.height - backgroundImage.height * ratio) / 2;
+                     bgCtx.drawImage(backgroundImage, 0, 0, backgroundImage.width, backgroundImage.height,
+                                   centerShift_x, centerShift_y, backgroundImage.width * ratio, backgroundImage.height * ratio);
+                     console.log("Background drawn on bgCanvas");
+                 } else {
+                     // Draw default white background if no image
+                     bgCtx.fillStyle = '#FFFFFF';
+                     bgCtx.fillRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+                     console.log("Default background drawn on bgCanvas");
+                 }
+             }
+
+             // Redraws background and overlay (e.g., after load)
+             function redrawAll(bgDataUrl, overlayDataUrl) {
+                 // Load background image first (async)
+                 backgroundImage = null; // Reset current bg
+                 backgroundImageDataUrl = bgDataUrl; // Store for potential resave
+
+                 const loadOverlay = () => {
+                     clearDrawingCanvas(); // Clear previous drawings first
+                     if (overlayDataUrl) {
+                         const img = new Image();
+                         img.onload = () => { drawCtx.drawImage(img, 0, 0); };
+                         img.onerror = () => console.error("Error loading overlay image for redraw.");
+                         img.src = overlayDataUrl;
+                     }
+                 };
+
+                 if (bgDataUrl) {
+                     const bgImg = new Image();
+                     bgImg.onload = () => {
+                         backgroundImage = bgImg; // Set the loaded image object
+                         drawBackground();      // Draw it on the background canvas
+                         loadOverlay();         // Then load the overlay on the drawing canvas
+                     };
+                     bgImg.onerror = () => {
+                         console.error("Error loading background image for redraw.");
+                         backgroundImage = null; // Reset on error
+                         drawBackground();      // Draw default white background
+                         loadOverlay();         // Still attempt to load overlay
+                     };
+                     bgImg.src = bgDataUrl;
+                 } else {
+                     // No background data, draw default and load overlay
+                     drawBackground();
+                     loadOverlay();
+                 }
+             }
+
+             // Clears only the drawing layer
+             function clearDrawingCanvas() {
+                 drawCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                 console.log("Drawing canvas cleared");
+             }
+
+             // --- Tool Implementation (Draw on drawCtx) ---
+             function drawLine(x0, y0, x1, y1) {
+                 drawCtx.beginPath();
+                 drawCtx.moveTo(x0, y0);
+                 drawCtx.lineTo(x1, y1);
+                 drawCtx.strokeStyle = currentColor;
+                 drawCtx.lineWidth = PENCIL_WIDTH; // Use pencil width
+                 drawCtx.lineCap = 'round';
+                 drawCtx.lineJoin = 'round';
+                 drawCtx.globalCompositeOperation = 'source-over'; // Normal drawing
+                 drawCtx.stroke();
+             }
+
+             function eraseLine(x0, y0, x1, y1) {
+                 drawCtx.beginPath();
+                 drawCtx.moveTo(x0, y0);
+                 drawCtx.lineTo(x1, y1);
+                 // Color doesn't matter for destination-out, but width does
+                 drawCtx.lineWidth = ERASER_WIDTH;
+                 drawCtx.lineCap = 'round';
+                 drawCtx.lineJoin = 'round';
+                 drawCtx.globalCompositeOperation = 'destination-out'; // Erase
+                 drawCtx.stroke();
+                 // IMPORTANT: Reset composite operation immediately after erasing stroke
+                 drawCtx.globalCompositeOperation = 'source-over';
+             }
+
+             function addText(x, y) {
+                 const text = prompt("Entrez le texte à ajouter :");
+                 if (text) {
+                     drawCtx.fillStyle = currentColor;
+                     drawCtx.font = TEXT_FONT;
+                     drawCtx.textAlign = 'center';
+                     drawCtx.textBaseline = 'middle';
+                     drawCtx.globalCompositeOperation = 'source-over';
+                     drawCtx.fillText(text, x, y);
+                 }
+             }
+
+             function placeFixedMarker(x, y) {
+                 drawCtx.fillStyle = currentColor;
+                 drawCtx.strokeStyle = 'black';
+                 drawCtx.lineWidth = 1;
+                 drawCtx.globalCompositeOperation = 'source-over';
+
+                 switch (currentMarkerType) {
+                     case 'troop_ground': drawStickman(drawCtx, x, y); break;
+                     case 'troop_air': drawDragon(drawCtx, x, y); break;
+                     case 'hero': drawStar(drawCtx, x, y, 5, MARKER_SIZE, MARKER_SIZE / 2); break;
+                     case 'target': drawCrosshair(drawCtx, x, y); break;
+                 }
+             }
+
+             function drawSpellCircle(context, cx, cy, radius, type, alpha = SPELL_AREA_ALPHA) {
+                 context.beginPath();
+                 context.globalCompositeOperation = 'source-over';
+                 let fillColor;
+                 let baseColor = currentColor; // Default to selected color for 'area'
+
+                 switch (type) {
+                     case 'spell_heal': baseColor = 'yellow'; alpha += 0.2; break; // More visible
+                     case 'spell_rage': baseColor = 'purple'; break;
+                 }
+
+                 fillColor = hexToRgba(baseColor, Math.min(1, alpha)); // Ensure alpha <= 1
+                 context.fillStyle = fillColor;
+                 context.arc(cx, cy, Math.max(1, radius), 0, Math.PI * 2);
+                 context.fill();
+             }
+
+
+             // --- Specific Marker Drawing Functions (now accept context) ---
+             function drawStickman(ctxTarget, x, y) {
+                 ctxTarget.strokeStyle = currentColor;
+                 ctxTarget.lineWidth = STICKMAN_LINE_WIDTH;
+                 const headRadius = MARKER_SIZE * 0.2;
+                 const bodyLength = MARKER_SIZE * 0.5;
+                 const limbLength = MARKER_SIZE * 0.4;
+                 // Draw commands... (same as before but use ctxTarget)
+                 ctxTarget.beginPath(); ctxTarget.arc(x, y - bodyLength / 2 - headRadius, headRadius, 0, Math.PI * 2); ctxTarget.stroke(); // Head
+                 ctxTarget.beginPath(); ctxTarget.moveTo(x, y - bodyLength / 2); ctxTarget.lineTo(x, y + bodyLength / 2); // Body
+                 ctxTarget.moveTo(x - limbLength, y - bodyLength * 0.1); ctxTarget.lineTo(x, y - bodyLength / 2); ctxTarget.lineTo(x + limbLength, y - bodyLength * 0.1); // Arms
+                 ctxTarget.moveTo(x - limbLength, y + bodyLength / 2 + limbLength); ctxTarget.lineTo(x, y + bodyLength / 2); ctxTarget.lineTo(x + limbLength, y + bodyLength / 2 + limbLength); // Legs
+                 ctxTarget.stroke();
+             }
+             function drawDragon(ctxTarget, x, y) {
+                 ctxTarget.font = `${DRAGON_FONT_SIZE}px Arial`;
+                 ctxTarget.fillStyle = currentColor; // Set color just in case
+                 ctxTarget.textAlign = 'center'; ctxTarget.textBaseline = 'middle';
+                 ctxTarget.fillText('🐉', x, y);
+             }
+             function drawStar(ctxTarget, cx, cy, spikes, outerRadius, innerRadius) {
+                 // Draw commands... (same as before but use ctxTarget and fill at the end)
+                  let rot = Math.PI / 2 * 3; let x = cx; let y = cy; let step = Math.PI / spikes;
+                  ctxTarget.beginPath(); ctxTarget.moveTo(cx, cy - outerRadius);
+                  for (let i = 0; i < spikes; i++) { x = cx + Math.cos(rot) * outerRadius; y = cy + Math.sin(rot) * outerRadius; ctxTarget.lineTo(x, y); rot += step; x = cx + Math.cos(rot) * innerRadius; y = cy + Math.sin(rot) * innerRadius; ctxTarget.lineTo(x, y); rot += step; }
+                  ctxTarget.lineTo(cx, cy - outerRadius); ctxTarget.closePath();
+                  ctxTarget.fillStyle = currentColor; // Apply fill color
+                  ctxTarget.fill();
+             }
+             function drawCrosshair(ctxTarget, x, y) {
+                 ctxTarget.strokeStyle = currentColor; ctxTarget.lineWidth = 2;
+                 ctxTarget.beginPath();
+                 ctxTarget.moveTo(x - MARKER_SIZE / 1.5, y); ctxTarget.lineTo(x + MARKER_SIZE / 1.5, y);
+                 ctxTarget.moveTo(x, y - MARKER_SIZE / 1.5); ctxTarget.lineTo(x, y + MARKER_SIZE / 1.5);
+                 ctxTarget.stroke();
+             }
+
+            // --- Text Wrapping Function for Export ---
+             function wrapText(context, text, x, y, maxWidth, lineHeight) {
+                 const words = text.split(' ');
+                 let line = '';
+                 let currentY = y;
+
+                 context.textBaseline = 'top'; // Align text from the top for wrapping
+
+                 for (let n = 0; n < words.length; n++) {
+                     const testLine = line + words[n] + ' ';
+                     const metrics = context.measureText(testLine);
+                     const testWidth = metrics.width;
+                     if (testWidth > maxWidth && n > 0) {
+                         context.fillText(line, x, currentY);
+                         line = words[n] + ' ';
+                         currentY += lineHeight;
+                     } else {
+                         line = testLine;
+                     }
+                 }
+                 context.fillText(line, x, currentY); // Draw the last line
+                 return currentY + lineHeight; // Return the Y position after the last line
+             }
+
+             // --- Utility Functions ---
+             function hexToRgba(hex, alpha) { /* ... (same as before) ... */
+                if (!hex.startsWith('#')) { const colorMap = { red: '#FF0000', yellow: '#FFFF00', green: '#008000', blue: '#0000FF', purple: '#800080', black: '#000000', white: '#FFFFFF' }; hex = colorMap[hex.toLowerCase()] || '#000000'; }
+                hex = hex.replace('#', ''); if (hex.length === 3) hex = hex.split('').map(c => c + c).join(''); if (hex.length !== 6) return `rgba(0,0,0,${alpha})`;
+                const r = parseInt(hex.substring(0, 2), 16); const g = parseInt(hex.substring(2, 4), 16); const b = parseInt(hex.substring(4, 6), 16); return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            function getMousePos(e) { const rect = drawingCanvas.getBoundingClientRect(); return { x: e.clientX - rect.left, y: e.clientY - rect.top }; }
+
+             // --- Event Handlers ---
+             function handleMouseDown(e) {
+                 const { x, y } = getMousePos(e);
+                 if (currentTool === 'marker' && isMarkerResizable) {
+                     isResizingSpell = true; isDrawing = false;
+                     spellCenterX = x; spellCenterY = y; spellCurrentRadius = 0;
+                     try {
+                         // Save state of DRAWING canvas only
+                         canvasStateBeforeResize = drawCtx.getImageData(0, 0, drawingCanvas.width, drawingCanvas.height);
+                     } catch(err) { console.error("Error getting ImageData:", err); canvasStateBeforeResize = null; }
+                     drawingCanvas.style.cursor = 'grabbing';
+                 } else if (currentTool === 'pencil' || currentTool === 'eraser') {
+                     isDrawing = true; isResizingSpell = false;
+                     [lastX, lastY] = [x, y];
+                     // Draw initial point for eraser
+                     if (currentTool === 'eraser') {
+                         eraseLine(x,y,x,y);
+                     }
+                 } else { isDrawing = false; isResizingSpell = false; }
+             }
+
+             function handleMouseMove(e) {
+                 const { x, y } = getMousePos(e);
+                 if (isResizingSpell) {
+                     if (canvasStateBeforeResize) { // Restore drawing canvas state before drawing preview
+                         drawCtx.putImageData(canvasStateBeforeResize, 0, 0);
+                     } else { clearDrawingCanvas(); /* Less ideal fallback */ }
+                     const dx = x - spellCenterX; const dy = y - spellCenterY;
+                     spellCurrentRadius = Math.sqrt(dx * dx + dy * dy);
+                     // Draw preview circle directly on drawing canvas
+                     drawSpellCircle(drawCtx, spellCenterX, spellCenterY, spellCurrentRadius, currentMarkerType);
+                 } else if (isDrawing) {
+                     if (currentTool === 'pencil') { drawLine(lastX, lastY, x, y); }
+                     else if (currentTool === 'eraser') { eraseLine(lastX, lastY, x, y); }
+                     [lastX, lastY] = [x, y];
+                 }
+             }
+
+             function handleMouseUp(e) {
+                 const { x, y } = getMousePos(e);
+                 if (isResizingSpell) {
+                     if (canvasStateBeforeResize) { // Restore before drawing final spell
+                         drawCtx.putImageData(canvasStateBeforeResize, 0, 0);
+                     }
+                     const dx = x - spellCenterX; const dy = y - spellCenterY;
+                     const finalRadius = Math.max(5, Math.sqrt(dx * dx + dy * dy));
+                     // Draw final spell circle permanently on drawing canvas
+                     drawSpellCircle(drawCtx, spellCenterX, spellCenterY, finalRadius, currentMarkerType);
+                     isResizingSpell = false; canvasStateBeforeResize = null;
+                     drawingCanvas.style.cursor = 'crosshair'; // Reset cursor
+                 } else if (!isDrawing && currentTool === 'text') { addText(x, y); }
+                 else if (!isDrawing && currentTool === 'marker' && !isMarkerResizable) { placeFixedMarker(x, y); }
+                 isDrawing = false; // Stop line drawing if it was active
+                 // Ensure composite operation is reset after any mouseup (belt-and-suspenders)
+                  drawCtx.globalCompositeOperation = 'source-over';
+             }
+
+            // --- Local Storage & UI --- (Save/Load needs to handle two layers indirectly)
+            function saveAnalysis() {
+                 const name = analysisNameInput.value.trim();
+                 if (!name) { alert("Nom requis."); analysisNameInput.focus(); return; }
+
+                 // Capture the state of the *drawing* canvas only
+                 const canvasOverlayDataUrl = drawingCanvas.toDataURL();
+                 const notes = analysisNotes.value;
+                 const newAnalysis = {
+                     name,
+                     backgroundDataUrl: backgroundImageDataUrl, // Save the original BG dataURL
+                     canvasOverlayDataUrl: canvasOverlayDataUrl, // Save the drawing layer dataURL
+                     notes,
+                     // Store canvas dimensions at time of save
+                     canvasWidth: drawingCanvas.width,
+                     canvasHeight: drawingCanvas.height
+                 };
+
+                 let analyses = getSavedAnalyses();
+                 const existingIndex = analyses.findIndex(a => a.name === name);
+                 if (existingIndex > -1) {
+                     if (confirm(`"${name}" existe déjà. Écraser ?`)) { analyses[existingIndex] = newAnalysis; }
+                     else { return; }
+                 } else { analyses.push(newAnalysis); }
+
+                 saveAnalyses(analyses);
+                 populateDropdown();
+                 analysisNameInput.value = ''; savedAnalysesDropdown.value = name;
+                 deleteAnalysisButton.disabled = false; alert(`Analyse "${name}" sauvegardée !`);
+             }
+
+             function loadAnalysis() {
+                 const selectedName = savedAnalysesDropdown.value;
+                 deleteAnalysisButton.disabled = selectedName === "";
+
+                 if (!selectedName) { /* Reset view */
+                     analysisNotes.value = ''; analysisNameInput.value = '';
+                     backgroundImage = null; backgroundImageDataUrl = null;
+                     fileNameDisplay.textContent = "Aucun fichier choisi";
+                     resizeCanvas(); // Resize clears canvases, redrawBackground draws default
+                     clearDrawingCanvas(); // Ensure drawing layer is clear
+                     return;
+                 }
+
+                 const analyses = getSavedAnalyses();
+                 const analysisToLoad = analyses.find(a => a.name === selectedName);
+
+                 if (analysisToLoad) {
+                     analysisNotes.value = analysisToLoad.notes;
+                     analysisNameInput.value = analysisToLoad.name;
+
+                     // Restore canvas size *before* drawing
+                     const savedWidth = analysisToLoad.canvasWidth || canvasContainer.offsetWidth;
+                     const savedHeight = analysisToLoad.canvasHeight || canvasContainer.offsetHeight;
+                     backgroundCanvas.width = drawingCanvas.width = savedWidth;
+                     backgroundCanvas.height = drawingCanvas.height = savedHeight;
+
+                      // Use redrawAll to handle async loading of images
+                     redrawAll(analysisToLoad.backgroundDataUrl, analysisToLoad.canvasOverlayDataUrl);
+
+                      // Update filename display based on loaded data
+                      fileNameDisplay.textContent = analysisToLoad.backgroundDataUrl ? "Fond chargé (sauvegarde)" : "Aucun fond sauvegardé";
+
+                 } else { alert("Erreur: Analyse non trouvée."); /* Reset view */ }
+             }
+
+            // --- Export Functionality ---
+            function exportAnalysis() {
+                const notes = analysisNotes.value;
+                const analysisName = analysisNameInput.value.trim() || "analyse-coc";
+                const fileName = `${analysisName}.png`;
+
+                // Create temporary canvas for export
+                const exportCanvas = document.createElement('canvas');
+                const exportCtx = exportCanvas.getContext('2d');
+
+                // Calculate height needed for text
+                const tempCtxForTextMeasure = document.createElement('canvas').getContext('2d');
+                tempCtxForTextMeasure.font = EXPORT_TEXT_FONT;
+                const lines = notes.split('\n');
+                let textHeight = lines.length * EXPORT_TEXT_LINE_HEIGHT + EXPORT_TEXT_PADDING * 2; // Initial estimate
+
+                // More accurate height calculation needed if wrapping occurs (simplified here)
+                // For a proper calculation, we'd need to call wrapText in a dummy mode
+
+                // Set export canvas dimensions
+                exportCanvas.width = drawingCanvas.width;
+                exportCanvas.height = drawingCanvas.height + textHeight;
+
+                // 1. Fill export canvas with background color
+                exportCtx.fillStyle = EXPORT_BG_COLOR;
+                exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+                // 2. Draw the background canvas content
+                exportCtx.drawImage(backgroundCanvas, 0, 0);
+
+                // 3. Draw the drawing canvas content on top
+                exportCtx.drawImage(drawingCanvas, 0, 0);
+
+                // 4. Draw the notes text below the image
+                exportCtx.fillStyle = '#000000'; // Black text
+                exportCtx.font = EXPORT_TEXT_FONT;
+                wrapText(exportCtx, notes, EXPORT_TEXT_PADDING, drawingCanvas.height + EXPORT_TEXT_PADDING, exportCanvas.width - EXPORT_TEXT_PADDING * 2, EXPORT_TEXT_LINE_HEIGHT);
+
+                // 5. Trigger download
+                const dataUrl = exportCanvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = fileName;
+                document.body.appendChild(link); // Required for Firefox
+                link.click();
+                document.body.removeChild(link);
+
+                console.log(`Exported analysis as ${fileName}`);
+            }
+
+
+            // --- Button Event Listeners ---
+            toolButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // ... (tool switching logic - same as before) ...
+                    const tool = button.getAttribute('data-tool'); currentTool = tool; setActiveButton(toolButtons, button);
+                    if (tool === 'marker') { currentMarkerType = button.getAttribute('data-marker'); isMarkerResizable = button.getAttribute('data-resizable') === 'true'; drawingCanvas.style.cursor = isMarkerResizable ? 'crosshair' : 'pointer'; }
+                    else { currentMarkerType = ''; isMarkerResizable = false; drawingCanvas.style.cursor = (tool === 'eraser') ? 'cell' : (tool === 'text') ? 'text' : 'crosshair'; }
+                    // Reset composite operation when switching tools
+                     drawCtx.globalCompositeOperation = 'source-over';
+                });
+            });
+
+            colorButtons.forEach(button => { /* ... (color switching logic - same as before) ... */
+                 button.addEventListener('click', () => { currentColor = button.getAttribute('data-color'); setActiveButton(colorButtons, button); });
+            });
+
+            clearCanvasButton.addEventListener('click', () => {
+                 if (confirm("Effacer tous les dessins (le fond restera) ?")) { clearDrawingCanvas(); }
+            });
+
+            bgImageUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                             backgroundImage = img; // Store loaded Image object
+                             backgroundImageDataUrl = e.target.result; // Store DataURL for saving
+                             drawBackground(); // Draw the new background
+                             fileNameDisplay.textContent = file.name.length > 30 ? file.name.substring(0, 27) + '...' : file.name;
+                        }
+                        img.onerror = () => { alert("Erreur chargement image."); backgroundImage = null; backgroundImageDataUrl = null; drawBackground(); fileNameDisplay.textContent = "Erreur"; };
+                        img.src = e.target.result;
+                    }
+                    reader.onerror = () => { alert("Erreur lecture fichier."); };
+                    reader.readAsDataURL(file);
+                }
+                event.target.value = null;
+            });
+
+            removeBgButton.addEventListener('click', () => {
+                if (confirm("Supprimer l'image de fond ? Les dessins resteront sur fond blanc.")) {
+                    backgroundImage = null; backgroundImageDataUrl = null;
+                    fileNameDisplay.textContent = "Aucun fichier choisi";
+                    drawBackground(); // Redraws the default background
+                }
+            });
+
+            saveAnalysisButton.addEventListener('click', saveAnalysis);
+            savedAnalysesDropdown.addEventListener('change', loadAnalysis);
+            deleteAnalysisButton.addEventListener('click', () => { /* ... (delete logic - same as before, ensure it calls saveAnalyses) ... */
+                 const selectedName = savedAnalysesDropdown.value; if (!selectedName) { alert("Sélectionnez une analyse."); return; }
+                 if (confirm(`Supprimer "${selectedName}" ?`)) { let analyses = getSavedAnalyses(); analyses = analyses.filter(a => a.name !== selectedName); saveAnalyses(analyses); populateDropdown(); if (analysisNameInput.value === selectedName) { analysisNotes.value = ''; analysisNameInput.value = ''; backgroundImage = null; backgroundImageDataUrl = null; fileNameDisplay.textContent = "Aucun fichier choisi"; resizeCanvas(); clearDrawingCanvas(); } alert(`Analyse "${selectedName}" supprimée.`); }
+            });
+            exportAnalysisButton.addEventListener('click', exportAnalysis);
+
+
+            // --- Initial App Setup ---
+            function initializeApp() {
+                 setActiveButton(toolButtons, document.getElementById('toolPencil'));
+                 setActiveButton(colorButtons, document.querySelector('.color-btn[data-color="red"]'));
+                 populateDropdown(); // Load saved analyses names
+                 resizeCanvas(); // Set initial canvas sizes & draw default background
+                 deleteAnalysisButton.disabled = savedAnalysesDropdown.options.length <= 1;
+                 // Ensure drawing context starts in normal mode
+                 drawCtx.globalCompositeOperation = 'source-over';
+            }
+
+            // Debounced resize handler
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    console.log("Window resized, adjusting canvas...");
+                    // Store overlay before resize potentially clears it
+                    const overlayData = drawingCanvas.toDataURL();
+                    resizeCanvas(); // Resizes both, redraws background
+                    // Restore overlay after resize
+                    const img = new Image();
+                    img.onload = () => { drawCtx.drawImage(img, 0, 0); };
+                    img.src = overlayData;
+                }, 250);
+            });
+
+            // Canvas Event Listeners (Attached to the TOP canvas: drawingCanvas)
+            drawingCanvas.addEventListener('mousedown', handleMouseDown);
+            drawingCanvas.addEventListener('mousemove', handleMouseMove);
+            drawingCanvas.addEventListener('mouseup', handleMouseUp);
+            drawingCanvas.addEventListener('mouseout', () => {
+                 if (isDrawing) isDrawing = false;
+                 if (isResizingSpell) {
+                     if (canvasStateBeforeResize) drawCtx.putImageData(canvasStateBeforeResize, 0, 0); // Restore
+                     isResizingSpell = false; canvasStateBeforeResize = null;
+                     drawingCanvas.style.cursor = 'crosshair';
+                 }
+                 // Ensure composite op is reset if mouse leaves during erase
+                 drawCtx.globalCompositeOperation = 'source-over';
+             });
+
+            initializeApp();
+
+            // Populate dropdown function (needs to be defined before use in init)
+             function populateDropdown() { /* ... (same as before) ... */
+                const analyses = getSavedAnalyses(); savedAnalysesDropdown.innerHTML = '<option value="">-- Sélectionnez --</option>'; analyses.sort((a, b) => a.name.localeCompare(b.name)); analyses.forEach(analysis => { const option = document.createElement('option'); option.value = analysis.name; option.textContent = analysis.name; savedAnalysesDropdown.appendChild(option); }); deleteAnalysisButton.disabled = analyses.length === 0 || savedAnalysesDropdown.value === "";
+             }
+             function getSavedAnalyses() { /* ... (same as before) ... */
+                try { const data = localStorage.getItem(STORAGE_KEY); return data ? JSON.parse(data) : []; } catch (e) { console.error("Erreur lecture localStorage:", e); return []; }
+             }
+             function saveAnalyses(analyses) { /* ... (same as before) ... */
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(analyses)); } catch (e) { console.error("Erreur sauvegarde localStorage:", e); alert("Erreur sauvegarde. Stockage plein?"); }
+             }
+             function setActiveButton(buttons, activeButton) { /* ... (same as before) ... */
+                buttons.forEach(btn => btn.classList.remove('active')); if (activeButton) { activeButton.classList.add('active'); }
+             }
+
         });
-        proposalList.appendChild(div);
-        proposalTitle.value = "";
-        proposalText.value = "";
-      }
-    });
-    
-    // Commentaires
-    addComment.addEventListener('click', () => {
-      if (commentText.value.trim() !== "") {
-        let div = document.createElement('div');
-        div.className = 'comment';
-        div.innerHTML = `<p>${commentText.value}</p>
-                         <button class="deleteComment">Supprimer</button>`;
-        div.querySelector('.deleteComment').addEventListener('click', () => {
-          commentList.removeChild(div);
-        });
-        commentList.appendChild(div);
-        commentText.value = "";
-      }
-    });
-  </script>
+    </script>
+
 </body>
 </html>
